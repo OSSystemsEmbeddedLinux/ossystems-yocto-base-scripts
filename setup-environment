@@ -23,6 +23,47 @@ if [ "$(whoami)" = "root" ]; then
 	exit 1
 fi
 
+
+debug() {
+	[ -n "$SE_DEBUG" ] && echo "DEBUG: $@"
+}
+
+eval_hook() {
+    local module=`basename $1`
+    local hook=$2
+    local out=
+    [ -n "$SE_DEBUG" ] || out="2>/dev/null"
+    eval "${module}_${hook} $cmd_line_args" $out || true
+}
+
+cmd_line_args=$@
+
+# Directory where to search for modules
+modules_dir=setup-environment.d
+
+# Determine modules
+modules=
+for dir in `ls -d sources/*`; do
+    mdir="$dir/conf/$modules_dir"
+    if [ -d "$mdir" ]; then
+        files=`ls $mdir | grep -v '~$'`
+        for file in $files; do
+            modules="$modules $mdir/$file"
+        done
+    fi
+done
+
+# Load modules
+for module in $modules; do
+    debug "Loading $module"
+    source $module
+done
+
+# Run before_init hooks
+for module in $modules; do
+    eval_hook $module before_init
+done
+
 if [ -z "$MACHINE" ]; then
 	echo "ERROR: machine not specified. Exiting..."
 	exit 1
@@ -93,3 +134,8 @@ EOF
 
     generated_config=1
 fi
+
+# Run after_init hooks
+for module in $modules; do
+    eval_hook $module after_init
+done
