@@ -20,12 +20,12 @@
 
 if [ "$(whoami)" = "root" ]; then
     echo "ERROR: do not use the BSP as root. Exiting..."
-	return 1
+    return 1
 fi
 
 
 debug() {
-	[ -n "$SE_DEBUG" ] && echo "DEBUG: $@"
+    [ -n "$SE_DEBUG" ] && echo "DEBUG: $@"
 }
 
 eval_hook() {
@@ -65,8 +65,8 @@ for module in $modules; do
 done
 
 if [ -z "$MACHINE" ]; then
-	echo "ERROR: machine not specified. Exiting..."
-	return 1
+    echo "ERROR: machine not specified. Exiting..."
+    return 1
 fi
 
 if [ -z "$SDKMACHINE" ]; then
