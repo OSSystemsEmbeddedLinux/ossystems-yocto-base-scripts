@@ -83,6 +83,7 @@ if [ -e sources/oe-core ]; then
 fi
 
 CWD=`pwd`
+LOCAL_CONF=conf/local.conf
 
 # Ensure all files in sources/base are kept in sync with project root
 updated=
@@ -112,14 +113,14 @@ cd $OEROOT
 export PATH="`echo $PATH | sed 's/\(:.\|:\)*:/:/g;s/^.\?://;s/:.\?$//'`"
 
 generated_config=
-if [ ! -e conf/local.conf.sample ]; then
-    mv conf/local.conf conf/local.conf.sample
+if [ ! -e ${LOCAL_CONF}.sample ]; then
+    mv $LOCAL_CONF ${LOCAL_CONF}.sample
 
     # Generate the local.conf based on the Yocto defaults
     TEMPLATES=$CWD/sources/base/conf 
     NCPU=`grep -c processor /proc/cpuinfo`
-    grep -v '^#\|^$' conf/local.conf.sample > conf/local.conf
-    cat >> conf/local.conf <<EOF
+    grep -v '^#\|^$' ${LOCAL_CONF}.sample > $LOCAL_CONF
+    cat >> $LOCAL_CONF <<EOF
 
 BB_NUMBER_THREADS = '$NCPU'
 PARALLEL_MAKE = '-j $NCPU'
@@ -128,7 +129,7 @@ EOF
     sed -e "s,MACHINE ??=.*,MACHINE ??= '$MACHINE',g" \
         -e "s,SDKMACHINE ??=.*,SDKMACHINE ??= '$SDKMACHINE',g" \
         -e "s,DISTRO ?=.*,DISTRO ?= '$DISTRO',g" \
-        -i conf/local.conf
+        -i $LOCAL_CONF
 
     cp $TEMPLATES/* conf/
 
