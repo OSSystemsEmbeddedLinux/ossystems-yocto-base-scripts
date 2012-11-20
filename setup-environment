@@ -54,6 +54,14 @@ set_conf_variable() {
     fi
 }
 
+unset_conf_variable() {
+    local var=$1
+    tmp=`mktemp`
+    grep -v " *$var " $LOCAL_CONF > $tmp
+    mv $tmp $LOCAL_CONF
+}
+
+
 cmd_line_args=$@
 
 # Directory where to search for modules
