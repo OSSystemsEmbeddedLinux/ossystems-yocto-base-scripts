@@ -36,6 +36,24 @@ eval_hook() {
     eval "${module}_${hook} $cmd_line_args" $out || true
 }
 
+set_conf_variable() {
+    # Function to set/reset variables in the local.conf file
+    local var=$1
+    local val=$2
+    local op=$3
+    local expr=`grep " *$var " $LOCAL_CONF`
+
+    if [ -z "$expr"]; then
+	[ -z "$op" ] && op="="
+	echo "$var $op $val" >> $LOCAL_CONF
+    else
+	if [ -z "$op" ]; then
+	    op="`echo $expr | sed -re 's/[^ ]+ ([=\?]+) .*/\1/'`"
+	fi
+	sed -e "s,$var .*,$var $op $val," -i $LOCAL_CONF
+    fi
+}
+
 cmd_line_args=$@
 
 # Directory where to search for modules
