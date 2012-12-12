@@ -68,25 +68,29 @@ cmd_line_args=$@
 modules_dir=setup-environment.d
 
 # Determine modules
-modules=
-for dir in `ls -d sources/*`; do
+available_modules=
+for dir in `find sources -mindepth 1 -maxdepth 1 -type d`; do
     mdir="$dir/conf/$modules_dir"
     if [ -d "$mdir" ]; then
         files=`ls $mdir | grep -v '~$'`
         for file in $files; do
-            modules="$modules $mdir/$file"
+            if [ -n "$available_modules" ]; then
+                available_modules="$available_modules $mdir/$file"
+            else
+                available_modules="$mdir/$file"
+            fi
         done
     fi
 done
 
 # Load modules
-for module in $modules; do
+for module in $available_modules; do
     debug "Loading $module"
-    source $module
+    . $module
 done
 
 # Run before_init hooks
-for module in $modules; do
+for module in $available_modules; do
     eval_hook $module before_init
 done
 
@@ -163,6 +167,6 @@ EOF
 fi
 
 # Run after_init hooks
-for module in $modules; do
+for module in $available_modules; do
     eval_hook $module after_init
 done
