@@ -63,6 +63,7 @@ unset_conf_variable() {
 
 
 cmd_line_args=$@
+CWD=`pwd`
 
 # Ensure all files in sources/base are kept in sync with project root
 updated=
@@ -131,7 +132,6 @@ if [ -e sources/oe-core ]; then
     OEROOT=sources/oe-core
 fi
 
-CWD=`pwd`
 LOCAL_CONF=conf/local.conf
 
 cd $OEROOT
