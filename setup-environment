@@ -54,6 +54,13 @@ set_conf_variable() {
     fi
 }
 
+append_conf_variable() {
+    # Append values to variables using +=
+    local var=$1
+    local val=$2
+    echo "$var += $val" >> $LOCAL_CONF
+}
+
 unset_conf_variable() {
     local var=$1
     tmp=`mktemp`
