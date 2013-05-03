@@ -41,7 +41,7 @@ set_conf_variable() {
     local var=$1
     local val=$2
     local op=$3
-    local expr="`grep "\s*$var " $LOCAL_CONF`"
+    local expr="`grep "^\s*$var " $LOCAL_CONF`"
 
     if [ -z "$expr"]; then
 	[ -z "$op" ] && op="="
