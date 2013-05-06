@@ -149,7 +149,6 @@ cd $OEROOT
 # wrong binaries can be used instead of the expected ones during task execution
 export PATH="`echo $PATH | sed 's/\(:.\|:\)*:/:/g;s/^.\?://;s/:.\?$//'`"
 
-generated_config=
 if [ ! -e ${LOCAL_CONF}.sample ]; then
     mv $LOCAL_CONF ${LOCAL_CONF}.sample
 
@@ -169,8 +168,6 @@ EOF
         -i $LOCAL_CONF
 
     cp $TEMPLATES/* conf/
-
-    generated_config=1
 fi
 
 # Run after_init hooks
