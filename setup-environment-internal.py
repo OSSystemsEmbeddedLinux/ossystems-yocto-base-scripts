@@ -32,9 +32,24 @@ def set_var(var, val, op='=', quote='"'):
     set_in_oe_conf_file(LOCAL_CONF, var, val, op, quote)
 
 def append_var(var, val, quote='"'):
-    localconf = open(LOCAL_CONF, 'a')
-    localconf.write('%s += %s%s%s\n' % (var, quote, val, quote))
-    localconf.close()
+    # First try to determine the current values for the given variable
+    assignment_pattern = variable_assignment_pattern(var)
+    current_values = []
+    lines = open(LOCAL_CONF).readlines()
+    for line in lines:
+        m = assignment_pattern.match(line)
+        if m:
+            current_values.append(m.groups()[1])
+
+    # Don't do anything if the given value is in the set of values
+    # bound to the given variable
+    if val in current_values:
+        return
+    else:
+        # Append the given value the given variable
+        localconf = open(LOCAL_CONF, 'a')
+        localconf.write('%s += %s%s%s\n' % (var, quote, val, quote))
+        localconf.close()
 
 def append_layers(layers):
     bblayers = open(BBLAYERS_CONF, 'a')
@@ -82,7 +97,7 @@ def load_modules():
 def set_in_oe_conf_file(conf_file, var, val, op, quote):
     lines = open(conf_file).readlines()
     new_lines = []
-    assignment_pattern = re.compile(' *%s *([\\?\\+:]*=) *[\'"]([^"]*)[\'"]' % (var))
+    assignment_pattern = variable_assignment_pattern(var)
     replaced = False
     for line in lines:
         m = assignment_pattern.match(line)
@@ -105,6 +120,10 @@ def set_in_oe_conf_file(conf_file, var, val, op, quote):
 ###
 ### Misc
 ###
+def variable_assignment_pattern(var):
+    return re.compile(' *%s *([\\?\\+:]*=) *[\'"]([^"]*)[\'"]' % (var))
+
+
 def maybe_set_envvar(var, val=None):
     # Only set the given environment variable if it is not set in the
     # current environment and if `val' is not None.
