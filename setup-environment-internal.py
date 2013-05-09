@@ -170,11 +170,10 @@ os.environ['OEROOT'] = OEROOT
 os.environ['PLATFORM_ROOT_DIR'] = PLATFORM_ROOT_DIR
 
 if os.path.exists(LOCAL_CONF) or os.path.exists(BBLAYERS_CONF):
-    print "%s or %s exits.  Not overwriting them." % (LOCAL_CONF, BBLAYERS_CONF)
-    sys.exit(1)
-else:
-    run_hook('before-init')
-    run_oe_init_build_env(build_dir)
+    sys.stderr.write("WARNING: %s or %s exits.  Not overwriting them.\n" % (LOCAL_CONF, BBLAYERS_CONF))
+
+run_hook('before-init')
+run_oe_init_build_env(build_dir)
 
 load_modules()
 
