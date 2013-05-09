@@ -19,6 +19,8 @@ while read var; do
     eval "[ -n \"\$$var\" ] && export $var"
 done < $whitelistenv
 
+# $setupenv prints as the last line the path to a temporary file which
+# contains its environment settings
 env=`$setupenv $1`
 ret=$?
 
@@ -26,10 +28,6 @@ if [ "$ret" != "0" ]; then
     echo "$env"
     return $ret
 fi
-
-# $setupenv prints as the last line the path to a temporary file which
-# contains its environment settings
-env=`echo $env | tail -n 1`
 
 while read line; do
     variable=`echo $line | awk -F'=' '{ print $1; }'`
