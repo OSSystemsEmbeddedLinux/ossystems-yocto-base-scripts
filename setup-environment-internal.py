@@ -191,10 +191,10 @@ os.environ['PLATFORM_ROOT_DIR'] = PLATFORM_ROOT_DIR
 if os.path.exists(LOCAL_CONF) or os.path.exists(BBLAYERS_CONF):
     sys.stderr.write("WARNING: %s or %s exits.  Not overwriting them.\n" % (LOCAL_CONF, BBLAYERS_CONF))
 
+load_modules()
+
 run_hook('before-init')
 run_oe_init_build_env(build_dir)
-
-load_modules()
 
 ## Set some basic variables here, so that they can be overwritten by
 ## after-init scripts
