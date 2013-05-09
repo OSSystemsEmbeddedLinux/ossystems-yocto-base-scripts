@@ -16,7 +16,7 @@ fi
 # These variable are whitelisted in 'oe-buildenv-internal' so keep it
 # in sync as it is know to affect the build setup
 while read var; do
-    export $var
+    eval "[ -n \"\$$var\" ] && export $var"
 done < $whitelistenv
 
 env=`$setupenv $1`
