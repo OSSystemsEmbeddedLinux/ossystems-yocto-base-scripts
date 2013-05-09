@@ -24,40 +24,45 @@ OEROOT = None
 LOCAL_CONF = None
 BBLAYERS_CONF = None
 
+LOCAL_CONF_EXISTS = None
+BBLAYERS_CONF_EXISTS = None
 
 ###
 ### API to be used by modules
 ###
 def set_var(var, val, op='=', quote='"'):
-    set_in_oe_conf_file(LOCAL_CONF, var, val, op, quote)
+    if not LOCAL_CONF_EXISTS:
+        set_in_oe_conf_file(LOCAL_CONF, var, val, op, quote)
 
 def append_var(var, val, quote='"'):
-    # First try to determine the current values for the given variable
-    assignment_pattern = variable_assignment_pattern(var)
-    current_values = []
-    lines = open(LOCAL_CONF).readlines()
-    for line in lines:
-        m = assignment_pattern.match(line)
-        if m:
-            current_values.append(m.groups()[1])
+    if not LOCAL_CONF_EXISTS:
+        # First try to determine the current values for the given variable
+        assignment_pattern = variable_assignment_pattern(var)
+        current_values = []
+        lines = open(LOCAL_CONF).readlines()
+        for line in lines:
+            m = assignment_pattern.match(line)
+            if m:
+                current_values.append(m.groups()[1])
 
-    # Don't do anything if the given value is in the set of values
-    # bound to the given variable
-    if val in current_values:
-        return
-    else:
-        # Append the given value the given variable
-        localconf = open(LOCAL_CONF, 'a')
-        localconf.write('%s += %s%s%s\n' % (var, quote, val, quote))
-        localconf.close()
+        # Don't do anything if the given value is in the set of values
+        # bound to the given variable
+        if val in current_values:
+            return
+        else:
+            # Append the given value the given variable
+            localconf = open(LOCAL_CONF, 'a')
+            localconf.write('%s += %s%s%s\n' % (var, quote, val, quote))
+            localconf.close()
 
 def append_layers(layers):
-    bblayers = open(BBLAYERS_CONF, 'a')
-    bblayers.write('BBLAYERS += "\\\n')
-    for layer in layers:
-        bblayers.write('  %s \\\n' % (layer))
-    bblayers.write('"\n')
-    bblayers.close()
+    if not BBLAYERS_CONF_EXISTS:
+        bblayers = open(BBLAYERS_CONF, 'a')
+        bblayers.write('BBLAYERS += "\\\n')
+        for layer in layers:
+            bblayers.write('  %s \\\n' % (layer))
+        bblayers.write('"\n')
+        bblayers.close()
 
 
 ###
@@ -175,6 +180,9 @@ if sys.argv[1] in [ '--help', '-h' ]:
 build_dir = sys.argv[1]
 LOCAL_CONF = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'local.conf')
 BBLAYERS_CONF = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'bblayers.conf')
+
+LOCAL_CONF_EXISTS = os.path.exists(LOCAL_CONF)
+BBLAYERS_CONF_EXISTS = os.path.exists(BBLAYERS_CONF)
 
 maybe_set_envvar('MACHINE')
 maybe_set_envvar('SDKMACHINE', 'i686')
