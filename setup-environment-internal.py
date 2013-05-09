@@ -106,15 +106,13 @@ def set_in_oe_conf_file(conf_file, var, val, op, quote):
 ### Misc
 ###
 def maybe_set_envvar(var, val=None):
+    # Only set the given environment variable if it is not set in the
+    # current environment and if `val' is not None.
     try:
         os.environ[var]
     except:
         if val:
             os.environ[var] = val
-        else:
-            print "ERROR: %s not specified. Exiting..." % (var)
-            sys.exit(1)
-
 
 def run_oe_init_build_env(build_dir):
     os.chdir(OEROOT)
@@ -183,10 +181,16 @@ load_modules()
 ## Set some basic variables here, so that they can be overwritten by
 ## after-init scripts
 ncpus = number_of_cpus()
+machine = None
+try:
+    machine = os.environ['MACHINE']
+except:
+    pass
 set_var('BB_NUMBER_THREADS', ncpus)
 set_var('PARALLEL_MAKE', '-j %s' % (ncpus))
 set_var('PLATFORM_ROOT_DIR', PLATFORM_ROOT_DIR)
-set_var('MACHINE', os.environ['MACHINE'], op='?=')
+if machine:
+    set_var('MACHINE', machine, op='?=')
 set_var('SDKMACHINE', os.environ['SDKMACHINE'], op='?=')
 set_var('DISTRO', os.environ['DISTRO'], op='?=')
 

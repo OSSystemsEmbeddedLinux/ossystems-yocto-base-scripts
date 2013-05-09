@@ -1,7 +1,7 @@
 setupenv='sources/base/setup-environment-internal.py'
 whitelistenv='sources/base/variable-whitelist.inc'
 
-if [ -z "$1" ] || [ -z "$MACHINE" ]; then
+if [ -z "$1" ]; then
     # Force usage (exit error)
     $setupenv
     return 1
