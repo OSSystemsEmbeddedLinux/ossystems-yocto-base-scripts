@@ -15,9 +15,17 @@ fi
 
 # These variable are whitelisted in 'oe-buildenv-internal' so keep it
 # in sync as it is know to affect the build setup
+whitelisted_vars=
 while read var; do
+    if [ -z "$whitelisted_vars" ]; then
+        whitelisted_vars=$var
+    else
+        whitelisted_vars="`echo -n $whitelisted_vars` $var"
+    fi
     eval "[ -n \"\$$var\" ] && export $var"
 done < $whitelistenv
+
+export BB_ENV_EXTRAWHITE="$whitelisted_vars"
 
 # $setupenv prints as the last line the path to a temporary file which
 # contains its environment settings
