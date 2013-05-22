@@ -31,6 +31,7 @@ BBLAYERS_CONF_EXISTS = None
 ### API to be used by modules
 ###
 def set_var(var, val, op='=', quote='"'):
+    os.environ[var] = str(val)
     if not LOCAL_CONF_EXISTS:
         set_in_oe_conf_file(LOCAL_CONF, var, val, op, quote)
 

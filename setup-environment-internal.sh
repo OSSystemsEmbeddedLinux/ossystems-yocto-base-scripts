@@ -40,7 +40,7 @@ fi
 while read line; do
     variable=`echo $line | awk -F'=' '{ print $1; }'`
     if grep -w -q $variable $whitelistenv; then
-        export $line
+        export "$line"
     fi
 done < $env
 
