@@ -13,6 +13,8 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     return 0
 fi
 
+BUILDDIR="`pwd`/$1"
+
 # These variable are whitelisted in 'oe-buildenv-internal' so keep it
 # in sync as it is know to affect the build setup
 whitelisted_vars=
