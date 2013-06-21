@@ -30,6 +30,9 @@ BBLAYERS_CONF_EXISTS = None
 ###
 ### API to be used by modules
 ###
+def set_default(var, val):
+    DEFAULTS[var] = val
+
 def set_var(var, val, op='=', quote='"'):
     os.environ[var] = str(val)
     if not LOCAL_CONF_EXISTS:
@@ -69,8 +72,16 @@ def append_layers(layers):
 ###
 ### Hooks & modules
 ###
-HOOKS = { 'before-init': [],
+HOOKS = { 'set-defaults': [],
+          'before-init': [],
           'after-init': [] }
+
+DEFAULTS = { 'DISTRO': 'poky',
+             'SDKMACHINE': 'i686',
+             'PACKAGE_CLASSES': 'package_ipk' }
+
+def run_set_defaults(fn):
+    HOOKS['set-defaults'].append(fn)
 
 def run_before_init(fn):
     HOOKS['before-init'].append(fn)
@@ -186,8 +197,6 @@ LOCAL_CONF_EXISTS = os.path.exists(LOCAL_CONF)
 BBLAYERS_CONF_EXISTS = os.path.exists(BBLAYERS_CONF)
 
 maybe_set_envvar('MACHINE')
-maybe_set_envvar('SDKMACHINE', 'i686')
-maybe_set_envvar('DISTRO', 'poky')
 
 if os.path.exists('sources/oe-core'):
     OEROOT = 'sources/oe-core'
@@ -201,6 +210,12 @@ if os.path.exists(LOCAL_CONF) or os.path.exists(BBLAYERS_CONF):
     sys.stderr.write("WARNING: %s or %s exits.  Not overwriting them.\n" % (LOCAL_CONF, BBLAYERS_CONF))
 
 load_modules()
+
+run_hook('set-defaults')
+
+maybe_set_envvar('DISTRO', DEFAULTS['DISTRO'])
+maybe_set_envvar('SDKMACHINE', DEFAULTS['SDKMACHINE'])
+maybe_set_envvar('PACKAGE_CLASSES', DEFAULTS['PACKAGE_CLASSES'])
 
 run_hook('before-init')
 run_oe_init_build_env(build_dir)
@@ -220,6 +235,7 @@ if machine:
     set_var('MACHINE', machine, op='?=')
 set_var('SDKMACHINE', os.environ['SDKMACHINE'], op='?=')
 set_var('DISTRO', os.environ['DISTRO'], op='?=')
+set_var('PACKAGE_CLASSES', os.environ['PACKAGE_CLASSES'], op='?=')
 
 run_hook('after-init')
 report_environment()
