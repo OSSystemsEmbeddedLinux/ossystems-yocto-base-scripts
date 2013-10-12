@@ -170,11 +170,13 @@ def report_environment():
     print tmpfname
 
 def number_of_cpus():
-    ncpus = 0
-    for line in open('/proc/cpuinfo').readlines():
-        if line.startswith('processor'):
-            ncpus += 1
-    return ncpus
+   # Python 2.6+
+    try:
+        import multiprocessing
+        return multiprocessing.cpu_count()
+    except (ImportError, NotImplementedError):
+        print "WARNING: Failed to identify the number of CPUs, falling back to 1."
+        return 1
 
 ###
 ### Parse command line and do stuff
