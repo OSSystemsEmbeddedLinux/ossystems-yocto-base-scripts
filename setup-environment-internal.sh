@@ -29,13 +29,16 @@ done < $whitelistenv
 
 export BB_ENV_EXTRAWHITE="$whitelisted_vars"
 
-# $setupenv prints as the last line the path to a temporary file which
-# contains its environment settings
+# $setupenv prints as the path to a temporary file which
+# contains its environment settings with 'ENV: ' mark
 env=`$setupenv $1`
+echo $env | grep -v '^ENV: '
 ret=$?
 
-if [ "$ret" != "0" ]; then
-    echo "$env"
+env=`echo $env | awk -F': ' '/^ENV: /{ print $2; }'`
+
+# In case of error, return
+if [ "$?" != 0 ]; then
     return $ret
 fi
 
