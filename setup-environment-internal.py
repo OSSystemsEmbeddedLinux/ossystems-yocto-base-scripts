@@ -166,6 +166,11 @@ def run_oe_init_build_env(build_dir):
         source_site_conf = os.path.join(os.getenv('HOME'), p, 'site.conf')
         dest_site_conf = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'site.conf')
         if os.path.exists(source_site_conf):
+            if os.path.exists(dest_site_conf) and not os.path.islink(dest_site_conf):
+                print "WARNING: The conf/site.conf file is not a symlink, not touching it"
+            elif os.path.islink(dest_site_conf):
+                os.unlink(dest_site_conf)
+
             print "INFO: Linking %s to conf/site.conf" % source_site_conf
             os.symlink(source_site_conf, dest_site_conf)
             break
