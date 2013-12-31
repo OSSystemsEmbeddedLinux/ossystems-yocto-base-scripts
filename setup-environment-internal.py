@@ -161,6 +161,15 @@ def run_oe_init_build_env(build_dir):
         (var, _, val) = line.strip().partition("=")
         os.environ[var] = val
 
+    # Enable site.conf use
+    for p in ['.oe', '.yocto']:
+        source_site_conf = os.path.join(os.getenv('HOME'), p, 'site.conf')
+        dest_site_conf = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'site.conf')
+        if os.path.exists(source_site_conf):
+            print "INFO: Linking %s to conf/site.conf" % source_site_conf
+            os.symlink(source_site_conf, dest_site_conf)
+            break
+
 def report_environment():
     tmpfd, tmpfname = tempfile.mkstemp()
     tmp = os.fdopen(tmpfd, 'w')
