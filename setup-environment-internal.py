@@ -167,7 +167,7 @@ def report_environment():
     for var,val in os.environ.items():
         tmp.write('%s=%s\n' % (var, val))
     tmp.close()
-    print tmpfname
+    print "ENV: %s" % tmpfname
 
 def number_of_cpus():
    # Python 2.6+
