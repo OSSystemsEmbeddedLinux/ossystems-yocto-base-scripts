@@ -212,8 +212,6 @@ BBLAYERS_CONF = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'bblayers.con
 LOCAL_CONF_EXISTS = os.path.exists(LOCAL_CONF)
 BBLAYERS_CONF_EXISTS = os.path.exists(BBLAYERS_CONF)
 
-maybe_set_envvar('MACHINE')
-
 if os.path.exists('sources/oe-core'):
     OEROOT = 'sources/oe-core'
 else:
@@ -229,6 +227,7 @@ load_modules()
 
 run_hook('set-defaults')
 
+maybe_set_envvar('MACHINE', DEFAULTS['MACHINE'])
 maybe_set_envvar('DISTRO', DEFAULTS['DISTRO'])
 maybe_set_envvar('SDKMACHINE', DEFAULTS['SDKMACHINE'])
 maybe_set_envvar('PACKAGE_CLASSES', DEFAULTS['PACKAGE_CLASSES'])
