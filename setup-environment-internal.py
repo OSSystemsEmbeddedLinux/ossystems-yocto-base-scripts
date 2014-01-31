@@ -77,6 +77,7 @@ HOOKS = { 'set-defaults': [],
           'after-init': [] }
 
 DEFAULTS = { 'DISTRO': 'poky',
+             'MACHINE': 'qemuarm',
              'SDKMACHINE': 'i686',
              'PACKAGE_CLASSES': 'package_ipk' }
 
