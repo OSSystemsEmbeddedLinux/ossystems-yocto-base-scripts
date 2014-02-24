@@ -32,15 +32,15 @@ export BB_ENV_EXTRAWHITE="$whitelisted_vars"
 # $setupenv prints as the path to a temporary file which
 # contains its environment settings with 'ENV: ' mark
 env=`$setupenv $1`
-echo $env | grep -v '^ENV: '
 ret=$?
-
-env=`echo $env | awk -F': ' '/^ENV: /{ print $2; }'`
-
 # In case of error, return
-if [ "$?" != 0 ]; then
+if [ "$ret" != 0 ]; then
     return $ret
 fi
+
+echo $env | grep -v '^ENV: '
+
+env=`echo $env | awk -F': ' '/^ENV: /{ print $2; }'`
 
 while read line; do
     variable=`echo $line | awk -F'=' '{ print $1; }'`
