@@ -133,6 +133,72 @@ def set_in_oe_conf_file(conf_file, var, val, op, quote):
     conf.write('\n')
     conf.close()
 
+###
+### EULAs
+###
+class eulas():
+    accept = {}
+
+
+def set_eula_accepted(acceptance_expr):
+    conf = open(LOCAL_CONF, 'a')
+    conf.write(acceptance_expr + '\n')
+    conf.close()
+
+
+def require_eula_acceptance(eula_file, acceptance_expr):
+    ## The current directory is the poky layer root directory, so
+    ## we prepend ../ to the eula file path
+    eula_file_path = os.path.join('..', eula_file)
+
+    if os.path.exists(eula_file_path):
+        sys.stderr.write(
+            '==========================================================================\n'
+            '=== Some SoC depends on libraries and packages that requires accepting ===\n' +
+            '=== an EULA. To have the right to use those binaries in your images    ===\n' +
+            '=== you need to read and accept the EULA that will be displayed.       ===\n' +
+            '==========================================================================\n\n')
+        lines = open(eula_file_path).readlines()
+        ## cheap pagination
+        lines_page = 24
+        numlines = len(lines)
+        numpages = numlines / lines_page
+        if numlines <= lines_page:
+            for line in lines:
+                sys.stderr.write(line)
+        for pageno in range(numpages):
+            for lineno in range(lines_page):
+                sys.stderr.write(lines[(pageno * lines_page) + lineno])
+            sys.stderr.write('========== Press ENTER to continue reading ==========')
+            sys.stdin.readline()
+        answer = None
+        while not answer in ['y', 'Y', 'n', 'N']:
+            sys.stderr.write('Accept EULA? [y/n] ')
+            answer = sys.stdin.readline().strip()
+        if answer in ['y', 'Y']:
+            set_eula_accepted(acceptance_expr)
+    else:
+        sys.stderr.write('%s does not exist. Aborting.\n' % (eula_file))
+        sys.exit(1)
+
+
+def handle_eulas():
+    accepted_eulas = []
+    try:
+        accepted_eulas = os.environ['ACCEPTED_EULAS'].split()
+    except:
+        pass
+
+    for eula_file, eula_acceptance_expr in eulas.accept.items():
+        if eula_file in accepted_eulas:
+            ## If EULA has been accepted via the environment, set it
+            ## accepted without displaying the EULA text
+            acceptance_expr = eulas.accept[eula_file]
+            set_eula_accepted(acceptance_expr)
+        else:
+            ## Prompt for EULAs acceptance based on settings in hook scripts
+            require_eula_acceptance(eula_file, eula_acceptance_expr)
+
 
 ###
 ### Misc
@@ -254,4 +320,7 @@ set_var('DISTRO', os.environ['DISTRO'], op='?=')
 set_var('PACKAGE_CLASSES', os.environ['PACKAGE_CLASSES'], op='?=')
 
 run_hook('after-init')
+
+handle_eulas()
+
 report_environment()
