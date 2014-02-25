@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7aade967_06093a2c",
+        "filename": "setup-environment-internal.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 1000001
+      },
+      "writtenOn": "2014-02-25T14:25:11Z",
+      "side": 1,
+      "message": "This is a nice idea however we have cases, as meta-fsl-arm, where the variable is specific. In this specific case the variable need to be set is:\n\nACCEPT_FSL_EULA \u003d \"1\"\n\nThis I think we need to have a way to make the EULA_FILES to an environment variable.",
+      "revId": "99e450d081fc744d4ac90da6c97a37a5d6842723",
+      "serverId": "57f9965e-cfb2-4db6-8589-8b17f788c97f",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7aade967_260eb635",
+        "filename": "setup-environment-internal.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 1000001
+      },
+      "writtenOn": "2014-02-25T14:25:11Z",
+      "side": 1,
+      "message": "We may want to offer a \u0027q\u0027 for quit. So if user has already read this specific EULA in past he can skip the rest of reading and go straight to the question.",
+      "revId": "99e450d081fc744d4ac90da6c97a37a5d6842723",
+      "serverId": "57f9965e-cfb2-4db6-8589-8b17f788c97f",
+      "unresolved": false
+    }
+  ]
+}
