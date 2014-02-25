@@ -133,6 +133,96 @@ def set_in_oe_conf_file(conf_file, var, val, op, quote):
     conf.write('\n')
     conf.close()
 
+###
+### EULAs
+###
+def set_eula_accepted(eula_file):
+    conf = open(LOCAL_CONF, 'a')
+    conf.write('ACCEPTED_EULAS += "%s"\n' % (eula_file))
+    conf.close()
+
+
+def require_eula_acceptance(eula_file):
+    ## The current directory is the poky layer root directory, so
+    ## we prepend ../ to the eula file path
+    eula_file_path = os.path.join('..', eula_file)
+
+    if os.path.exists(eula_file_path):
+        sys.stderr.write(
+            '==========================================================================\n'
+            '=== Some SoC depends on libraries and packages that requires accepting ===\n' +
+            '=== an EULA. To have the right to use those binaries in your images    ===\n' +
+            '=== you need to read and accept the EULA that will be displayed.       ===\n' +
+            '==========================================================================\n\n')
+        lines = open(eula_file_path).readlines()
+        ## cheap pagination
+        lines_page = 24
+        numlines = len(lines)
+        numpages = numlines / lines_page
+        if numlines <= lines_page:
+            for line in lines:
+                sys.stderr.write(line)
+        for pageno in range(numpages):
+            for lineno in range(lines_page):
+                sys.stderr.write(lines[(pageno * lines_page) + lineno])
+            sys.stderr.write('========== Press ENTER to continue reading ==========')
+            sys.stdin.readline()
+        answer = None
+        while not answer in ['y', 'Y', 'n', 'N']:
+            sys.stderr.write('Accept EULA? [y/n] ')
+            answer = sys.stdin.readline().strip()
+        if answer in ['n', 'N']:
+            sys.stderr.write('EULA has not been accepted.  Aborting.\n')
+            sys.exit(1)
+        else:
+            set_eula_accepted(eula_file)
+    else:
+        sys.stderr.write('%s does not exist. Aborting.\n' % (eula_file))
+        sys.exit(1)
+
+
+def handle_eulas():
+    lines = open(LOCAL_CONF).readlines()
+    eula_files = []
+    accepted_eulas = []
+
+    def get_value(line, var, assignment_pattern):
+        m = assignment_pattern.match(line)
+        matches = m.groups()
+        operator = matches[0]
+        value = None
+        try:
+            value = matches[1]
+        except:
+            sys.err.write('ERROR: assignment to %s requires a value' % (var))
+        if operator == '=':
+            return ('overwrite', value)
+        elif operator in ['+=', '=+']:
+            return ('append', value)
+        else:
+            return None
+
+    for line in lines:
+        line = line.strip()
+        if line.startswith('EULA_FILES'):
+            val = get_value(line, 'EULA_FILES', variable_assignment_pattern('EULA_FILES'))
+            if val:
+                if val[0] == 'overwrite':
+                    eula_files = val[1]
+                else:
+                    eula_files.append(val[1])
+        if line.startswith('ACCEPTED_EULAS'):
+            val = get_value(line, 'ACCEPTED_EULAS', variable_assignment_pattern('ACCEPTED_EULAS'))
+            if val:
+                if val[0] == 'overwrite':
+                    accepted_eulas = val[1]
+                else:
+                    accepted_eulas.append(val[1])
+
+    for eula_file in eula_files:
+        if not eula_file in accepted_eulas:
+            require_eula_acceptance(eula_file)
+
 
 ###
 ### Misc
@@ -254,4 +344,7 @@ set_var('DISTRO', os.environ['DISTRO'], op='?=')
 set_var('PACKAGE_CLASSES', os.environ['PACKAGE_CLASSES'], op='?=')
 
 run_hook('after-init')
+
+handle_eulas()
+
 report_environment()
