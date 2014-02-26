@@ -29,26 +29,18 @@ done < $whitelistenv
 
 export BB_ENV_EXTRAWHITE="$whitelisted_vars"
 
-# $setupenv prints as the path to a temporary file which
-# contains its environment settings with 'ENV: ' mark
-env=`$setupenv $1`
-ret=$?
-# In case of error, return
-if [ "$ret" != 0 ]; then
-    return $ret
-fi
+# File to which $setupenv will write the environment
+env_file=`mktemp`
 
-echo $env | grep -v '^ENV: '
-
-env=`echo $env | awk -F': ' '/^ENV: /{ print $2; }'`
+$setupenv $BUILDDIR $env_file || return $?
 
 while read line; do
     variable=`echo $line | awk -F'=' '{ print $1; }'`
     if grep -w -q $variable $whitelistenv; then
         export "$line"
     fi
-done < $env
+done < $env_file
 
-rm $env
+rm $env_file
 
 cd $BUILDDIR

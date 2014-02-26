@@ -241,13 +241,11 @@ def run_oe_init_build_env(build_dir):
             os.symlink(source_site_conf, dest_site_conf)
             break
 
-def report_environment():
-    tmpfd, tmpfname = tempfile.mkstemp()
-    tmp = os.fdopen(tmpfd, 'w')
+def report_environment(env_file):
+    env_fd = open(env_file, 'w')
     for var,val in os.environ.items():
-        tmp.write('%s=%s\n' % (var, val))
-    tmp.close()
-    print "ENV: %s" % tmpfname
+        env_fd.write('%s=%s\n' % (var, val))
+    env_fd.close()
 
 def number_of_cpus():
    # Python 2.6+
@@ -265,13 +263,19 @@ if os.getuid() == 0:
     print "ERROR: do not use the BSP as root. Exiting..."
     sys.exit(1)
 
-if len(sys.argv) < 2:
+if len(sys.argv) < 3:
     usage(1)
 
 if sys.argv[1] in [ '--help', '-h' ]:
     usage(0)
 
 build_dir = sys.argv[1]
+env_file = sys.argv[2] # file where the environment will be reported to
+
+# Check if env_file really exists, just in case.
+if not os.path.exists(env_file):
+    sys.stderr.write('env file (%s) does not exist.  Aborting.\n' % env_file)
+
 LOCAL_CONF = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'local.conf')
 BBLAYERS_CONF = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'bblayers.conf')
 
@@ -323,4 +327,4 @@ run_hook('after-init')
 
 handle_eulas()
 
-report_environment()
+report_environment(env_file)
