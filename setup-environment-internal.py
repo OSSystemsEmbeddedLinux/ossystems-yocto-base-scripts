@@ -152,25 +152,13 @@ def require_eula_acceptance(eula_file, acceptance_expr):
     eula_file_path = os.path.join('..', eula_file)
 
     if os.path.exists(eula_file_path):
-        sys.stderr.write(
+        print(
             '==========================================================================\n'
             '=== Some SoC depends on libraries and packages that requires accepting ===\n' +
             '=== an EULA. To have the right to use those binaries in your images    ===\n' +
             '=== you need to read and accept the EULA that will be displayed.       ===\n' +
             '==========================================================================\n\n')
-        lines = open(eula_file_path).readlines()
-        ## cheap pagination
-        lines_page = 24
-        numlines = len(lines)
-        numpages = numlines / lines_page
-        if numlines <= lines_page:
-            for line in lines:
-                sys.stderr.write(line)
-        for pageno in range(numpages):
-            for lineno in range(lines_page):
-                sys.stderr.write(lines[(pageno * lines_page) + lineno])
-            sys.stderr.write('========== Press ENTER to continue reading ==========')
-            sys.stdin.readline()
+        os.system('more -d "%s"' % eula_file_path)
         answer = None
         while not answer in ['y', 'Y', 'n', 'N']:
             sys.stderr.write('Accept EULA? [y/n] ')
