@@ -170,6 +170,21 @@ def require_eula_acceptance(eula_file, acceptance_expr):
         sys.exit(1)
 
 
+def local_conf_accepted_eulas():
+    "Return a list of accepted EULAS (indicated by the EULA file) in local.conf"
+    eula_files = []
+    for line in open(LOCAL_CONF).readlines():
+        lc_expr = parse_assignment_expr(line)
+        if lc_expr:
+            for eula_file, acceptance_expr in eulas.accept.items():
+                a_expr = parse_assignment_expr(acceptance_expr)
+                if a_expr:
+                    # Check if variables and values for acceptance
+                    # expressions are the same
+                    if a_expr[0] == lc_expr[0] and a_expr[2] == lc_expr[2]:
+                        eula_files.append(eula_file)
+    return eula_files
+
 def handle_eulas():
     accepted_eulas = []
     try:
@@ -177,8 +192,14 @@ def handle_eulas():
     except:
         pass
 
+    already_accepted_eulas = local_conf_accepted_eulas()
+
     for eula_file, eula_acceptance_expr in eulas.accept.items():
-        if eula_file in accepted_eulas:
+        if eula_file in already_accepted_eulas:
+            ## EULA has been set as accepted in local.conf, so just
+            ## ignore it
+            pass
+        elif eula_file in accepted_eulas:
             ## If EULA has been accepted via the environment, set it
             ## accepted without displaying the EULA text
             acceptance_expr = eulas.accept[eula_file]
@@ -191,6 +212,53 @@ def handle_eulas():
 ###
 ### Misc
 ###
+def parse_assignment_expr(line):
+    ''' Parse the given line and returns either None, indicating that
+    the expression in line is not an assignment; or a 3-element tuple
+    representing the variable, operator and value '''
+    line = line.strip()
+    if line.startswith('#'):
+        ## Ignore comments
+        return None
+    if line[-1:] == '\\':
+        ## For simplicity, ignore continuation lines (this is actually
+        ## a latent bug: if the given line is the last part of a
+        ## continuation line -- don't have the continuation indicator
+        ## \ -- and not an assignment expression, this parser will
+        ## fail badly)
+        return None
+    var = ''
+    op = ''
+    val = ''
+    looking_for = 'var'
+    for pos, char in enumerate(line):
+        if looking_for == 'var':
+            if char not in ['=', '?', ':', '+']:
+                if char == ' ':
+                    looking_for = 'op'
+                else:
+                    var += char
+            else:
+                looking_for = 'op'
+        elif looking_for == 'op':
+            if char in ['=', '?', ':', '+']:
+                op += char
+                if len(char) > 3:
+                    raise Exception('Syntax error (operator): %s' % line)
+            elif char == ' ':
+                if not op in ['=', '+=', '=+', '?=', '??=', ':=']:
+                    raise Exception('Invalid operator: %s' % op)
+                looking_for = 'val'
+            else:
+                raise Exception('Syntax error (operator): %s' % line)
+        else:
+            val = line[pos:]
+            break
+    if var and op and val:
+        return (var, op, val)
+    else:
+        return None # Not an assignment line
+
 def variable_assignment_pattern(var):
     return re.compile(' *%s *([\\?\\+:]*=) *[\'"]([^"]*)[\'"]' % (var))
 
