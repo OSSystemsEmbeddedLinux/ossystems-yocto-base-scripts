@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 
 import os
-import sys
 import re
+import sys
 import glob
+import pipes
 import tempfile
 import subprocess
 
@@ -21,11 +22,12 @@ def usage(exit_code=None):
 ###
 PLATFORM_ROOT_DIR = os.getcwd()
 OEROOT = None
+
+###
+### Configuration files data
+###
 LOCAL_CONF = None
 BBLAYERS_CONF = None
-
-LOCAL_CONF_EXISTS = None
-BBLAYERS_CONF_EXISTS = None
 
 ###
 ### API to be used by modules
@@ -34,39 +36,18 @@ def set_default(var, val):
     DEFAULTS[var] = val
 
 def set_var(var, val, op='=', quote='"'):
+    # quote is not currently used.  It's been kept in the function
+    # prototype for backward compatibility
     os.environ[var] = str(val)
-    if not LOCAL_CONF_EXISTS:
-        set_in_oe_conf_file(LOCAL_CONF, var, val, op, quote)
+    LOCAL_CONF.add(var, op, val)
 
 def append_var(var, val, quote='"'):
-    if not LOCAL_CONF_EXISTS:
-        # First try to determine the current values for the given variable
-        assignment_pattern = variable_assignment_pattern(var)
-        current_values = []
-        lines = open(LOCAL_CONF).readlines()
-        for line in lines:
-            m = assignment_pattern.match(line)
-            if m:
-                current_values.append(m.groups()[1])
-
-        # Don't do anything if the given value is in the set of values
-        # bound to the given variable
-        if val in current_values:
-            return
-        else:
-            # Append the given value the given variable
-            localconf = open(LOCAL_CONF, 'a')
-            localconf.write('%s += %s%s%s\n' % (var, quote, val, quote))
-            localconf.close()
+    # quote is not currently used.  It's been kept in the function
+    # prototype for backward compatibility
+    LOCAL_CONF.add(var, '+=', val)
 
 def append_layers(layers):
-    if not BBLAYERS_CONF_EXISTS:
-        bblayers = open(BBLAYERS_CONF, 'a')
-        bblayers.write('BBLAYERS += "\\\n')
-        for layer in layers:
-            bblayers.write('  %s \\\n' % (layer))
-        bblayers.write('"\n')
-        bblayers.close()
+    BBLAYERS_CONF.add('BBLAYERS', '+=', ' '.join(layers))
 
 
 ###
@@ -109,128 +90,103 @@ def load_modules():
 
 
 ###
-### Setting OE variables
-###
-def set_in_oe_conf_file(conf_file, var, val, op, quote):
-    lines = open(conf_file).readlines()
-    new_lines = []
-    assignment_pattern = variable_assignment_pattern(var)
-    replaced = False
-    for line in lines:
-        m = assignment_pattern.match(line)
-        if m:
-            new_lines.append('%s %s %s%s%s\n' % (var, op or m.groups()[0], quote, val, quote))
-            replaced = True
-        else:
-            # Clean up comments
-            if line.strip() != '' and not line.strip().startswith('#'):
-                new_lines.append(line)
-    conf = open(conf_file, 'w')
-    for line in new_lines:
-        conf.write(line)
-    if not replaced:
-        conf.write('%s %s %s%s%s' % (var, op, quote, str(val), quote))
-    conf.write('\n')
-    conf.close()
-
-###
 ### EULAs
 ###
-class eulas():
-    accept = {}
+class Eula():
+    def __init__(self, local_conf_file):
+        self.accept = {}
+        self.local_conf_file = local_conf_file
 
+    def _set_eula_accepted(self, acceptance_expr):
+        conf = open(self.local_conf_file, 'a')
+        conf.write(acceptance_expr + '\n')
+        conf.close()
 
-def set_eula_accepted(acceptance_expr):
-    conf = open(LOCAL_CONF, 'a')
-    conf.write(acceptance_expr + '\n')
-    conf.close()
+    def _require_eula_acceptance(self, eula_file, acceptance_expr):
+        ## The current directory is the poky layer root directory, so
+        ## we prepend ../ to the eula file path
+        eula_file_path = os.path.join('..', eula_file)
 
-
-def require_eula_acceptance(eula_file, acceptance_expr):
-    ## The current directory is the poky layer root directory, so
-    ## we prepend ../ to the eula file path
-    eula_file_path = os.path.join('..', eula_file)
-
-    if os.path.exists(eula_file_path):
-        print(
-            '==========================================================================\n'
-            '=== Some SoC depends on libraries and packages that requires accepting ===\n' +
-            '=== an EULA. To have the right to use those binaries in your images    ===\n' +
-            '=== you need to read and accept the EULA that will be displayed.       ===\n' +
-            '==========================================================================\n\n')
-        os.system('more -d "%s"' % eula_file_path)
-        answer = None
-        while not answer in ['y', 'Y', 'n', 'N']:
-            sys.stderr.write('Accept EULA? [y/n] ')
-            answer = sys.stdin.readline().strip()
-        if answer in ['y', 'Y']:
-            set_eula_accepted(acceptance_expr)
-    else:
-        sys.stderr.write('%s does not exist. Aborting.\n' % (eula_file))
-        sys.exit(1)
-
-
-def local_conf_accepted_eulas():
-    "Return a list of accepted EULAS (indicated by the EULA file) in local.conf"
-    eula_files = []
-    for line in open(LOCAL_CONF).readlines():
-        lc_expr = parse_assignment_expr(line)
-        if lc_expr:
-            for eula_file, acceptance_expr in eulas.accept.items():
-                a_expr = parse_assignment_expr(acceptance_expr)
-                if a_expr:
-                    # Check if variables and values for acceptance
-                    # expressions are the same
-                    if a_expr[0] == lc_expr[0] and a_expr[2] == lc_expr[2]:
-                        eula_files.append(eula_file)
-    return eula_files
-
-def handle_eulas():
-    accepted_eulas = []
-    try:
-        accepted_eulas = os.environ['ACCEPTED_EULAS'].split()
-    except:
-        pass
-
-    already_accepted_eulas = local_conf_accepted_eulas()
-
-    for eula_file, eula_acceptance_expr in eulas.accept.items():
-        if eula_file in already_accepted_eulas:
-            ## EULA has been set as accepted in local.conf, so just
-            ## ignore it
-            pass
-        elif eula_file in accepted_eulas:
-            ## If EULA has been accepted via the environment, set it
-            ## accepted without displaying the EULA text
-            acceptance_expr = eulas.accept[eula_file]
-            set_eula_accepted(acceptance_expr)
+        if os.path.exists(eula_file_path):
+            os.system('more -d "%s"' % eula_file_path)
+            answer = None
+            while not answer in ['y', 'Y', 'n', 'N']:
+                sys.stdout.write('Accept EULA (%s)? [y/n] ' % eula_file)
+                answer = sys.stdin.readline().strip()
+            if answer in ['y', 'Y']:
+                self._set_eula_accepted(acceptance_expr)
         else:
-            ## Prompt for EULAs acceptance based on settings in hook scripts
-            require_eula_acceptance(eula_file, eula_acceptance_expr)
+            sys.stderr.write('%s does not exist. Aborting.\n' % (eula_file))
+            sys.exit(1)
+
+
+    def _local_conf_accepted_eulas(self):
+        "Return a list of accepted EULAS (indicated by the EULA file) in local.conf"
+        eula_files = []
+        local_conf = Conf(self.local_conf_file, quiet=True)
+        local_conf_data = local_conf.conf_data
+        for eula_file, acceptance_expr in eulas.accept.items():
+            ae_var = ae_op = ae_val = None
+            try:
+                ae_var, ae_op, ae_val = parse_assignment_expr(acceptance_expr)
+            except:
+                pass
+            if ae_var:
+                for lc_var, lc_op, lc_val in local_conf_data:
+                    ## We ignore the operator when comparing
+                    ## acceptance expressions.  We probably shouldn't.
+                    if lc_var == ae_var and lc_val == ae_val:
+                        eula_files.append(eula_file)
+                        break
+        return eula_files
+
+    def handle(self):
+        accepted_eulas = []
+        try:
+            accepted_eulas = os.environ['ACCEPTED_EULAS'].split()
+        except:
+            pass
+
+        already_accepted_eulas = self._local_conf_accepted_eulas()
+        show_eula_banner = True
+
+        for eula_file, eula_acceptance_expr in eulas.accept.items():
+            if eula_file in already_accepted_eulas:
+                ## EULA has been set as accepted in local.conf, so just
+                ## ignore it
+                pass
+            elif eula_file in accepted_eulas:
+                ## If EULA has been accepted via the environment, set it
+                ## accepted without displaying the EULA text
+                acceptance_expr = eulas.accept[eula_file]
+                self._set_eula_accepted(acceptance_expr)
+            else:
+                ## Prompt for EULAs acceptance based on settings in hook scripts
+                if show_eula_banner:
+                    show_eula_banner = False # show banner only once
+                    print(
+                        '\n\n==========================================================================\n'
+                        '=== Some SoC depends on libraries and packages that requires accepting ===\n' +
+                        '=== EULA(s). To have the right to use those binaries in your images    ===\n' +
+                        '=== you need to read and accept the EULA(s) that will be displayed.    ===\n' +
+                        '==========================================================================\n\n')
+                    sys.stdout.write('Press ENTER to continue')
+                    sys.stdin.readline()
+                self._require_eula_acceptance(eula_file, eula_acceptance_expr)
 
 
 ###
-### Misc
+### Configuration files handling
 ###
+def parse_value(val):
+    return eval(val).split()
+
 def parse_assignment_expr(line):
-    ''' Parse the given line and returns either None, indicating that
-    the expression in line is not an assignment; or a 3-element tuple
-    representing the variable, operator and value '''
-    line = line.strip()
-    if line.startswith('#'):
-        ## Ignore comments
-        return None
-    if line[-1:] == '\\':
-        ## For simplicity, ignore continuation lines (this is actually
-        ## a latent bug: if the given line is the last part of a
-        ## continuation line -- don't have the continuation indicator
-        ## \ -- and not an assignment expression, this parser will
-        ## fail badly)
-        return None
     var = ''
     op = ''
     val = ''
     looking_for = 'var'
+    line = line.strip()
     for pos, char in enumerate(line):
         if looking_for == 'var':
             if char not in ['=', '?', ':', '+']:
@@ -255,14 +211,78 @@ def parse_assignment_expr(line):
             val = line[pos:]
             break
     if var and op and val:
-        return (var, op, val)
+        return (var, op, parse_value(val))
     else:
         return None # Not an assignment line
 
-def variable_assignment_pattern(var):
-    return re.compile(' *%s *([\\?\\+:]*=) *[\'"]([^"]*)[\'"]' % (var))
+def format_value(val):
+    escaped = pipes.quote(' '.join(map(str, val)))
+    ## pipe.quote doesn't seem to actually quote the given argument,
+    ## unless it's necessary.  We want arguments to be always quoted.
+    if escaped.startswith("'"):
+        return escaped
+    return "'%s'" % escaped
 
 
+class Conf(object):
+    def __init__(self, conf_file, quiet=False):
+        self.conf_file = conf_file
+        self.read_only = os.path.exists(conf_file)
+        if self.read_only and not quiet:
+            sys.stderr.write("WARNING: %s exists.  Not overwriting it.\n" % conf_file)
+        self.conf_data = []
+
+    def _read_conf(self):
+        lines = open(self.conf_file).readlines()
+        content = []
+        linebuf = ''
+        for line in lines:
+            stripped_line = line.strip()
+            if stripped_line.startswith('#') or stripped_line == '':
+                linebuf = ''
+                continue
+            if line.endswith('\\\n'):
+                prev_line_continued = True
+                linebuf += line[:-2]
+                continue
+            if linebuf:
+                linebuf += line
+                content.append(linebuf)
+            else:
+                content.append(line)
+            linebuf = ''
+        return(content)
+
+    def _parse_conf(self, lines):
+        assignments = []
+        for line in lines:
+            expr = parse_assignment_expr(line)
+            if expr:
+                assignments.append(expr)
+        return assignments
+
+    def read_conf(self):
+        self.conf_data = self._parse_conf(self._read_conf())
+
+
+    def write(self):
+        if not self.read_only:
+            conf_fd = open(self.conf_file, 'w')
+            for var, op, val in self.conf_data:
+                conf_fd.write('%s %s %s\n' % (var, op, format_value(val)))
+            conf_fd.close()
+
+    def add(self, var, op, val):
+        if not self.read_only:
+            self.conf_data.append((var, op, str(val).split()))
+
+def write_confs():
+    LOCAL_CONF.write()
+    BBLAYERS_CONF.write()
+
+###
+### Misc
+###
 def maybe_set_envvar(var, val=None):
     # Only set the given environment variable if it is not set in the
     # current environment and if `val' is not None.
@@ -332,12 +352,6 @@ env_file = sys.argv[2] # file where the environment will be reported to
 if not os.path.exists(env_file):
     sys.stderr.write('env file (%s) does not exist.  Aborting.\n' % env_file)
 
-LOCAL_CONF = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'local.conf')
-BBLAYERS_CONF = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'bblayers.conf')
-
-LOCAL_CONF_EXISTS = os.path.exists(LOCAL_CONF)
-BBLAYERS_CONF_EXISTS = os.path.exists(BBLAYERS_CONF)
-
 maybe_set_envvar('MACHINE')
 
 if os.path.exists('sources/oe-core'):
@@ -348,9 +362,20 @@ else:
 os.environ['OEROOT'] = OEROOT
 os.environ['PLATFORM_ROOT_DIR'] = PLATFORM_ROOT_DIR
 
-if os.path.exists(LOCAL_CONF) or os.path.exists(BBLAYERS_CONF):
-    sys.stderr.write("WARNING: %s or %s exits.  Not overwriting them.\n" % (LOCAL_CONF, BBLAYERS_CONF))
+local_conf_file = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'local.conf')
+bblayers_conf_file = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'bblayers.conf')
 
+## Create the configuration objects here, before loading modules
+## and before running run_oe_init_build_env, but don't try to read
+## the configuration files yet.
+LOCAL_CONF = Conf(local_conf_file)
+BBLAYERS_CONF = Conf(bblayers_conf_file)
+
+## Create the eula object here, so hook scripts can add stuff to
+## eulas.accept
+eulas = Eula(local_conf_file)
+
+## Load all the hook scripts
 load_modules()
 
 run_hook('set-defaults')
@@ -361,6 +386,11 @@ maybe_set_envvar('PACKAGE_CLASSES', DEFAULTS['PACKAGE_CLASSES'])
 
 run_hook('before-init')
 run_oe_init_build_env(build_dir)
+
+## Now that run_oe_init_build_env has been run, we can actually
+## read the configuration files
+LOCAL_CONF.read_conf()
+BBLAYERS_CONF.read_conf()
 
 ## Set some basic variables here, so that they can be overwritten by
 ## after-init scripts
@@ -380,7 +410,8 @@ set_var('DISTRO', os.environ['DISTRO'], op='?=')
 set_var('PACKAGE_CLASSES', os.environ['PACKAGE_CLASSES'], op='?=')
 
 run_hook('after-init')
+write_confs()
 
-handle_eulas()
+eulas.handle()
 
 report_environment(env_file)
