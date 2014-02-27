@@ -1,4 +1,4 @@
-setupenv='sources/base/setup-environment-internal.py'
+setupenv='sources/base/setup_environment_internal.py'
 whitelistenv='sources/base/variable-whitelist.inc'
 
 if [ -z "$1" ]; then

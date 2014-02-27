@@ -335,83 +335,84 @@ def number_of_cpus():
 ###
 ### Parse command line and do stuff
 ###
-if os.getuid() == 0:
-    print "ERROR: do not use the BSP as root. Exiting..."
-    sys.exit(1)
+if __name__ == '__main__':
+    if os.getuid() == 0:
+        print "ERROR: do not use the BSP as root. Exiting..."
+        sys.exit(1)
 
-if len(sys.argv) < 3:
-    usage(1)
+    if len(sys.argv) < 3:
+        usage(1)
 
-if sys.argv[1] in [ '--help', '-h' ]:
-    usage(0)
+    if sys.argv[1] in [ '--help', '-h' ]:
+        usage(0)
 
-build_dir = sys.argv[1]
-env_file = sys.argv[2] # file where the environment will be reported to
+    build_dir = sys.argv[1]
+    env_file = sys.argv[2] # file where the environment will be reported to
 
-# Check if env_file really exists, just in case.
-if not os.path.exists(env_file):
-    sys.stderr.write('env file (%s) does not exist.  Aborting.\n' % env_file)
+    # Check if env_file really exists, just in case.
+    if not os.path.exists(env_file):
+        sys.stderr.write('env file (%s) does not exist.  Aborting.\n' % env_file)
 
-maybe_set_envvar('MACHINE')
+    maybe_set_envvar('MACHINE')
 
-if os.path.exists('sources/oe-core'):
-    OEROOT = 'sources/oe-core'
-else:
-    OEROOT = 'sources/poky'
+    if os.path.exists('sources/oe-core'):
+        OEROOT = 'sources/oe-core'
+    else:
+        OEROOT = 'sources/poky'
 
-os.environ['OEROOT'] = OEROOT
-os.environ['PLATFORM_ROOT_DIR'] = PLATFORM_ROOT_DIR
+    os.environ['OEROOT'] = OEROOT
+    os.environ['PLATFORM_ROOT_DIR'] = PLATFORM_ROOT_DIR
 
-local_conf_file = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'local.conf')
-bblayers_conf_file = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'bblayers.conf')
+    local_conf_file = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'local.conf')
+    bblayers_conf_file = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'bblayers.conf')
 
-## Create the configuration objects here, before loading modules
-## and before running run_oe_init_build_env, but don't try to read
-## the configuration files yet.
-LOCAL_CONF = Conf(local_conf_file)
-BBLAYERS_CONF = Conf(bblayers_conf_file)
+    ## Create the configuration objects here, before loading modules
+    ## and before running run_oe_init_build_env, but don't try to read
+    ## the configuration files yet.
+    LOCAL_CONF = Conf(local_conf_file)
+    BBLAYERS_CONF = Conf(bblayers_conf_file)
 
-## Create the eula object here, so hook scripts can add stuff to
-## eulas.accept
-eulas = Eula(local_conf_file)
+    ## Create the eula object here, so hook scripts can add stuff to
+    ## eulas.accept
+    eulas = Eula(local_conf_file)
 
-## Load all the hook scripts
-load_modules()
+    ## Load all the hook scripts
+    load_modules()
 
-run_hook('set-defaults')
+    run_hook('set-defaults')
 
-maybe_set_envvar('DISTRO', DEFAULTS['DISTRO'])
-maybe_set_envvar('SDKMACHINE', DEFAULTS['SDKMACHINE'])
-maybe_set_envvar('PACKAGE_CLASSES', DEFAULTS['PACKAGE_CLASSES'])
+    maybe_set_envvar('DISTRO', DEFAULTS['DISTRO'])
+    maybe_set_envvar('SDKMACHINE', DEFAULTS['SDKMACHINE'])
+    maybe_set_envvar('PACKAGE_CLASSES', DEFAULTS['PACKAGE_CLASSES'])
 
-run_hook('before-init')
-run_oe_init_build_env(build_dir)
+    run_hook('before-init')
+    run_oe_init_build_env(build_dir)
 
-## Now that run_oe_init_build_env has been run, we can actually
-## read the configuration files
-LOCAL_CONF.read_conf()
-BBLAYERS_CONF.read_conf()
+    ## Now that run_oe_init_build_env has been run, we can actually
+    ## read the configuration files
+    LOCAL_CONF.read_conf()
+    BBLAYERS_CONF.read_conf()
 
-## Set some basic variables here, so that they can be overwritten by
-## after-init scripts
-ncpus = number_of_cpus()
-machine = None
-try:
-    machine = os.environ['MACHINE']
-except:
-    pass
-set_var('BB_NUMBER_THREADS', ncpus)
-set_var('PARALLEL_MAKE', '-j %s' % (ncpus))
-set_var('PLATFORM_ROOT_DIR', PLATFORM_ROOT_DIR)
-if machine:
-    set_var('MACHINE', machine, op='?=')
-set_var('SDKMACHINE', os.environ['SDKMACHINE'], op='?=')
-set_var('DISTRO', os.environ['DISTRO'], op='?=')
-set_var('PACKAGE_CLASSES', os.environ['PACKAGE_CLASSES'], op='?=')
+    ## Set some basic variables here, so that they can be overwritten by
+    ## after-init scripts
+    ncpus = number_of_cpus()
+    machine = None
+    try:
+        machine = os.environ['MACHINE']
+    except:
+        pass
+    set_var('BB_NUMBER_THREADS', ncpus)
+    set_var('PARALLEL_MAKE', '-j %s' % (ncpus))
+    set_var('PLATFORM_ROOT_DIR', PLATFORM_ROOT_DIR)
+    if machine:
+        set_var('MACHINE', machine, op='?=')
+    set_var('SDKMACHINE', os.environ['SDKMACHINE'], op='?=')
+    set_var('DISTRO', os.environ['DISTRO'], op='?=')
+    set_var('PACKAGE_CLASSES', os.environ['PACKAGE_CLASSES'], op='?=')
 
-run_hook('after-init')
-write_confs()
+    run_hook('after-init')
+    write_confs()
 
-eulas.handle()
+    eulas.handle()
 
-report_environment(env_file)
+    report_environment(env_file)
