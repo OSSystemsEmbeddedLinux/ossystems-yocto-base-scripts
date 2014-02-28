@@ -125,6 +125,7 @@ class Eula():
         "Return a list of accepted EULAS (indicated by the EULA file) in local.conf"
         eula_files = []
         local_conf = Conf(self.local_conf_file, quiet=True)
+        local_conf.read_conf()
         local_conf_data = local_conf.conf_data
         for eula_file, acceptance_expr in eulas.accept.items():
             ae_var = ae_op = ae_val = None
