@@ -275,6 +275,25 @@ class Conf(object):
                 assignments.append(expr)
         return assignments
 
+    def _simplify(self):
+        ## Squash multiple values for sequential assignment
+        ## expressions which envolve the same variable and operator is
+        ## '+='.  So:
+        ##     foo += 'bar'
+        ##     foo += 'baz'
+        ## is turned into:
+        ##     foo += 'bar baz'
+        simpl_data = []
+        for expr in self.conf_data:
+            if simpl_data:
+                prev_var, prev_op, prev_val = simpl_data[-1]
+                if prev_var == expr[0] and prev_op == '+=' and prev_op == expr[1]:
+                    simpl_data[-1] = (prev_var, prev_op, prev_val + expr[2])
+                    continue
+            simpl_data.append(expr)
+        return simpl_data
+
+
     def read_conf(self):
         self.conf_data = self._parse_conf(self._read_conf())
 
@@ -282,7 +301,7 @@ class Conf(object):
     def write(self):
         if not self.read_only:
             conf_fd = open(self.conf_file, 'w')
-            for var, op, val in self.conf_data:
+            for var, op, val in self._simplify():
                 conf_fd.write('%s %s %s\n' % (var, op, format_value(val)))
             conf_fd.close()
 
