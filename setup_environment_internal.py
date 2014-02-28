@@ -219,9 +219,22 @@ def format_value(val):
     escaped = pipes.quote(' '.join(map(str, val)))
     ## pipe.quote doesn't seem to actually quote the given argument,
     ## unless it's necessary.  We want arguments to be always quoted.
-    if escaped.startswith("'"):
+    if not escaped.startswith("'"):
+        escaped = "'%s'" % escaped
+    if len(escaped) > 65:
+        lines = escaped.split()
+        if len(lines) < 2:
+            return escaped
+        indent = ' ' * 4
+        lines[0] = lines[0][1:] # remove initial quote
+        lines[-1:] = [lines[-1:][0][:-1]] # remove end quote
+        fmt_val = "'\\\n"
+        for line in lines:
+            fmt_val += indent + line + ' \\\n'
+        fmt_val += "'"
+        return fmt_val
+    else:
         return escaped
-    return "'%s'" % escaped
 
 
 class Conf(object):
