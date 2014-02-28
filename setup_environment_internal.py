@@ -57,7 +57,8 @@ HOOKS = { 'set-defaults': [],
           'before-init': [],
           'after-init': [] }
 
-DEFAULTS = { 'DISTRO': 'poky',
+DEFAULTS = { 'DISTRO': 'poky'
+             'MACHINE': 'qemuarm',
              'SDKMACHINE': 'i686',
              'PACKAGE_CLASSES': 'package_ipk' }
 
@@ -366,7 +367,7 @@ if __name__ == '__main__':
     if not os.path.exists(env_file):
         sys.stderr.write('env file (%s) does not exist.  Aborting.\n' % env_file)
 
-    maybe_set_envvar('MACHINE')
+    maybe_set_envvar('MACHINE', DEFAULTS['MACHINE'])
 
     if os.path.exists('sources/oe-core'):
         OEROOT = 'sources/oe-core'
