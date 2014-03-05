@@ -24,7 +24,7 @@ while read var; do
     else
         whitelisted_vars="`echo -n $whitelisted_vars` $var"
     fi
-    eval "[ -n \"\$$var\" ] && export $var"
+    eval "[ -n \"\$$var\" ] && export $var || true"
 done < $whitelistenv
 
 export BB_ENV_EXTRAWHITE="$whitelisted_vars"
