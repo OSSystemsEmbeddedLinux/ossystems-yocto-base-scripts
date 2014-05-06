@@ -357,15 +357,6 @@ def report_environment(env_file):
         env_fd.write('%s=%s\n' % (var, val))
     env_fd.close()
 
-def number_of_cpus():
-   # Python 2.6+
-    try:
-        import multiprocessing
-        return multiprocessing.cpu_count()
-    except (ImportError, NotImplementedError):
-        print "WARNING: Failed to identify the number of CPUs, falling back to 1."
-        return 1
-
 ###
 ### Parse command line and do stuff
 ###
@@ -429,14 +420,11 @@ if __name__ == '__main__':
 
     ## Set some basic variables here, so that they can be overwritten by
     ## after-init scripts
-    ncpus = number_of_cpus()
     machine = None
     try:
         machine = os.environ['MACHINE']
     except:
         pass
-    set_var('BB_NUMBER_THREADS', ncpus)
-    set_var('PARALLEL_MAKE', '-j %s' % (ncpus))
     set_var('PLATFORM_ROOT_DIR', PLATFORM_ROOT_DIR)
     if machine:
         set_var('MACHINE', machine, op='?=')
