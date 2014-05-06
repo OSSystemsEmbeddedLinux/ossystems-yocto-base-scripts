@@ -46,6 +46,14 @@ def append_var(var, val, quote='"'):
     # prototype for backward compatibility
     LOCAL_CONF.add(var, '+=', val)
 
+def remove_var(var):
+    # Remove `var' from the configuration
+    LOCAL_CONF.remove(var)
+
+def reset_var(var, val, op='='):
+    remove_var(var)
+    set_var(var, val, op)
+
 def append_layers(layers):
     BBLAYERS_CONF.add('BBLAYERS', '+=', ' '.join(layers))
 
@@ -309,6 +317,14 @@ class Conf(object):
     def add(self, var, op, val):
         if not self.read_only:
             self.conf_data.append((var, op, str(val).split()))
+
+    def remove(self, var):
+        if not self.read_only:
+            new_conf = []
+            for expr in self.conf_data:
+                if var != expr[0]:
+                    new_conf.append(expr)
+            self.conf_data = new_conf
 
 def write_confs():
     LOCAL_CONF.write()
