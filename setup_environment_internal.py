@@ -441,12 +441,12 @@ if __name__ == '__main__':
         machine = os.environ['MACHINE']
     except:
         pass
-    set_var('PLATFORM_ROOT_DIR', PLATFORM_ROOT_DIR)
+    reset_var('PLATFORM_ROOT_DIR', PLATFORM_ROOT_DIR)
     if machine:
-        set_var('MACHINE', machine, op='?=')
-    set_var('SDKMACHINE', os.environ['SDKMACHINE'], op='?=')
-    set_var('DISTRO', os.environ['DISTRO'], op='?=')
-    set_var('PACKAGE_CLASSES', os.environ['PACKAGE_CLASSES'], op='?=')
+        reset_var('MACHINE', machine, op='?=')
+    reset_var('SDKMACHINE', os.environ['SDKMACHINE'], op='?=')
+    reset_var('DISTRO', os.environ['DISTRO'], op='?=')
+    reset_var('PACKAGE_CLASSES', os.environ['PACKAGE_CLASSES'], op='?=')
 
     run_hook('after-init')
     write_confs()
