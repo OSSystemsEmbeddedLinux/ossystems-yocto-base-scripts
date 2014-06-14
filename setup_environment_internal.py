@@ -38,7 +38,6 @@ def set_default(var, val):
 def set_var(var, val, op='=', quote='"'):
     # quote is not currently used.  It's been kept in the function
     # prototype for backward compatibility
-    os.environ[var] = str(val)
     LOCAL_CONF.add(var, op, val)
 
 def append_var(var, val, quote='"'):
@@ -333,14 +332,15 @@ def write_confs():
 ###
 ### Misc
 ###
-def maybe_set_envvar(var, val=None):
-    # Only set the given environment variable if it is not set in the
-    # current environment and if `val' is not None.
+def weak_set_var(var):
+    # Use the environment as value or take the default, making it weak
+    # in the local.conf
     try:
-        os.environ[var]
+        val = os.environ[var]
     except:
-        if val:
-            os.environ[var] = val
+        val = DEFAULTS[var]
+
+    reset_var(var, val, op='?=')
 
 def run_oe_init_build_env(build_dir):
     os.chdir(OEROOT)
@@ -394,8 +394,6 @@ if __name__ == '__main__':
     if not os.path.exists(env_file):
         sys.stderr.write('env file (%s) does not exist.  Aborting.\n' % env_file)
 
-    maybe_set_envvar('MACHINE', DEFAULTS['MACHINE'])
-
     if os.path.exists('sources/oe-core'):
         OEROOT = 'sources/oe-core'
     else:
@@ -422,10 +420,6 @@ if __name__ == '__main__':
 
     run_hook('set-defaults')
 
-    maybe_set_envvar('DISTRO', DEFAULTS['DISTRO'])
-    maybe_set_envvar('SDKMACHINE', DEFAULTS['SDKMACHINE'])
-    maybe_set_envvar('PACKAGE_CLASSES', DEFAULTS['PACKAGE_CLASSES'])
-
     run_hook('before-init')
     run_oe_init_build_env(build_dir)
 
@@ -436,17 +430,12 @@ if __name__ == '__main__':
 
     ## Set some basic variables here, so that they can be overwritten by
     ## after-init scripts
-    machine = None
-    try:
-        machine = os.environ['MACHINE']
-    except:
-        pass
     reset_var('PLATFORM_ROOT_DIR', PLATFORM_ROOT_DIR)
-    if machine:
-        reset_var('MACHINE', machine, op='?=')
-    reset_var('SDKMACHINE', os.environ['SDKMACHINE'], op='?=')
-    reset_var('DISTRO', os.environ['DISTRO'], op='?=')
-    reset_var('PACKAGE_CLASSES', os.environ['PACKAGE_CLASSES'], op='?=')
+
+    weak_set_var('MACHINE')
+    weak_set_var('SDKMACHINE')
+    weak_set_var('DISTRO')
+    weak_set_var('PACKAGE_CLASSES')
 
     run_hook('after-init')
     write_confs()
