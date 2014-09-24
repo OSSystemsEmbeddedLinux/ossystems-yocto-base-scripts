@@ -56,6 +56,19 @@ def reset_var(var, val, op='='):
 def append_layers(layers):
     BBLAYERS_CONF.add('BBLAYERS', '+=', ' '.join(layers))
 
+def get_machines_by_layer(layer):
+    layers = find_layers()
+    if layer in layers.keys():
+        machines_dir = os.path.join(layers[layer], 'conf', 'machine')
+        machine_conf_files = []
+        try:
+            machine_conf_files = glob.glob(os.path.join(machines_dir, '*.conf'))
+        except:
+            raise Exception('Could not list machines for layer %s' % layer)
+        return [ os.path.basename(os.path.splitext(f)[0]) \
+                     for f in machine_conf_files ]
+    else:
+        raise Exception('Could not find layer %s' % layer)
 
 ###
 ### Hooks & modules
@@ -345,6 +358,17 @@ def system_find(basedir, maxdepth=None, type=None, expr=None, path=None):
     command = ["find"] + args
     proc = subprocess.Popen(command, stdout = subprocess.PIPE)
     return proc.stdout.readlines()
+
+def find_layers():
+    ''' Return a dict mapping layer names to their paths '''
+    layer_conf_paths = system_find(os.path.join(PLATFORM_ROOT_DIR, "sources"),
+                                   path = '*/conf/layer.conf')
+    layers = {}
+    for layer_conf_path in layer_conf_paths:
+        layer_dir = os.path.dirname(os.path.dirname(layer_conf_path))
+        layer = os.path.basename(layer_dir)
+        layers[layer] = layer_dir
+    return layers
 
 def weak_set_var(var):
     # Use the environment as value or take the default, making it weak
