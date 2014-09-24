@@ -83,10 +83,10 @@ def run_hook(hook):
 
 def find_modules():
     modules = []
-    maxdepth = 3
-    command = ["find", os.path.join(PLATFORM_ROOT_DIR, "sources"), "-maxdepth", str(maxdepth), "-type", "d"]
-    proc = subprocess.Popen(command, stdout = subprocess.PIPE)
-    for dir in proc.stdout.readlines():
+    dirs = system_find(os.path.join(PLATFORM_ROOT_DIR, "sources"),
+                        maxdepth = 3,
+                        type = 'd')
+    for dir in dirs:
         dir = dir.strip()
         if os.path.basename(dir) == 'setup-environment.d':
             modules += (glob.glob(os.path.join(dir, "*.py")))
@@ -332,6 +332,20 @@ def write_confs():
 ###
 ### Misc
 ###
+def system_find(basedir, maxdepth=None, type=None, expr=None, path=None):
+    args = [basedir]
+    if maxdepth:
+        args += ['-maxdepth', str(maxdepth)]
+    if type:
+        args += ['-type', type]
+    if expr:
+        args += [expr]
+    if path:
+        args += ['-path', path]
+    command = ["find"] + args
+    proc = subprocess.Popen(command, stdout = subprocess.PIPE)
+    return proc.stdout.readlines()
+
 def weak_set_var(var):
     # Use the environment as value or take the default, making it weak
     # in the local.conf
