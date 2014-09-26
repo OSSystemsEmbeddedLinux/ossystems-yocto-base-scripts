@@ -219,12 +219,12 @@ def parse_assignment_expr(line):
             else:
                 looking_for = 'op'
         elif looking_for == 'op':
-            if char in ['=', '?', ':', '+']:
+            if char in ['=', '?', ':', '+', '.']:
                 op += char
                 if len(char) > 3:
                     raise Exception('Syntax error (operator): %s' % line)
             elif char == ' ':
-                if not op in ['=', '+=', '=+', '?=', '??=', ':=']:
+                if not op in ['=', '+=', '=+', '?=', '??=', ':=', '.=', '=.']:
                     raise Exception('Invalid operator: %s' % op)
                 looking_for = 'val'
             else:
