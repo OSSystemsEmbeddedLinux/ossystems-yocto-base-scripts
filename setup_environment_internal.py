@@ -345,7 +345,9 @@ def write_confs():
 ###
 ### Misc
 ###
-def system_find(basedir, maxdepth=None, type=None, expr=None, path=None):
+def system_find(basedir, maxdepth=None, type=None, expr=None, path=None, name=None):
+    if path and name:
+        raise Exception('path and name cannot be used together.')
     args = [basedir]
     if maxdepth:
         args += ['-maxdepth', str(maxdepth)]
@@ -355,6 +357,8 @@ def system_find(basedir, maxdepth=None, type=None, expr=None, path=None):
         args += [expr]
     if path:
         args += ['-path', path]
+    if name:
+        args += ['-name', name]
     command = ["find"] + args
     proc = subprocess.Popen(command, stdout = subprocess.PIPE)
     return proc.stdout.readlines()
