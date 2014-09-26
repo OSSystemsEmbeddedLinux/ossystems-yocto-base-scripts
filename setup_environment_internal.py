@@ -362,6 +362,7 @@ def system_find(basedir, maxdepth=None, type=None, expr=None, path=None):
 def find_layers():
     ''' Return a dict mapping layer names to their paths '''
     layer_conf_paths = system_find(os.path.join(PLATFORM_ROOT_DIR, "sources"),
+                                   maxdepth = 4,
                                    path = '*/conf/layer.conf')
     layers = {}
     for layer_conf_path in layer_conf_paths:
