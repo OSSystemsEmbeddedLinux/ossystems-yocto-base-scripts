@@ -340,12 +340,13 @@ class Conf(object):
         linebuf = ''
         for line in lines:
             stripped_line = line.strip()
+            rstripped_line = line.rstrip()
             if stripped_line.startswith('#') or stripped_line == '':
                 linebuf = ''
                 continue
-            if line.endswith('\\\n'):
+            if rstripped_line.endswith('\\'):
                 prev_line_continued = True
-                linebuf += line[:-2]
+                linebuf += rstripped_line[:-1]
                 continue
             if linebuf:
                 linebuf += line
