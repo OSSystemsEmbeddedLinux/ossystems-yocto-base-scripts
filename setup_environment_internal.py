@@ -64,7 +64,7 @@ def append_layers(layers):
 def get_machines_by_layer(layer):
     layers = find_layers()
     if layer in layers.keys():
-        machines_dir = os.path.join(layers[layer], 'conf', 'machine')
+        machines_dir = os.path.join(layers[layer]['path'], 'conf', 'machine')
         machine_conf_files = []
         try:
             machine_conf_files = glob.glob(os.path.join(machines_dir, '*.conf'))
@@ -100,14 +100,62 @@ def run_hook(hook):
     [ fn() for fn in HOOKS[hook] ]
 
 def find_modules():
+    ''' Return a list of modules.  Lower priority ones first. '''
+    layers = find_layers()
+    mod_dirs = system_find(os.path.join(PLATFORM_ROOT_DIR, "sources"),
+                           maxdepth = 3,
+                           type = 'd',
+                           name = 'setup-environment.d')
     modules = []
-    dirs = system_find(os.path.join(PLATFORM_ROOT_DIR, "sources"),
-                        maxdepth = 3,
-                        type = 'd')
-    for dir in dirs:
-        dir = dir.strip()
-        if os.path.basename(dir) == 'setup-environment.d':
-            modules += (glob.glob(os.path.join(dir, "*.py")))
+    for dir in mod_dirs:
+        modules += glob.glob(os.path.join(dir, "*.py"))
+
+    ## Build up a dict mapping module paths to their priorities (None
+    ## if no priority).  The priority is the layer priority.
+    modules_with_priorities = []
+    for mod in modules:
+        for layer, layer_props in layers.items():
+            layer_path = layer_props['path']
+            debug('layer: %s, path: %s' % (layer, layer_path))
+            layer_priority = layer_props['priority']
+            ## Append a `/' to layer_path, to make it explicit that we
+            ## are considering directories, otherwise we may risk
+            ## ignoring layer directories whose basedir is a substring
+            ## of other layers (e.g., .../foo and .../foobar)
+            if mod.startswith(layer_path + '/'):
+                modules_with_priorities.append((mod, layer_priority))
+                break
+        else:
+            modules_with_priorities.append((mod, None))
+
+    ## Remove any module without priority from
+    ## modules_with_priorities.  We allow only a single module without
+    ## priority (usually a configuration repository which is not a
+    ## proper Yocto Project layer -- i.e., no layer.conf)
+    module_without_priority = None
+    for mod, priority in modules_with_priorities[:]:
+        if not priority:
+            if module_without_priority:
+                sys.stderr.write('ERROR: found more than one module without priority:\n')
+                sys.stderr.write(' * %s\n' % module_without_priority)
+                sys.stderr.write(' * %s\n' % mod)
+                sys.exit(1)
+            else:
+                modules_with_priorities.remove((mod, priority))
+                module_without_priority = mod
+
+    ## Sort modules by layer priority
+    modules_with_priorities = sorted(modules_with_priorities, key=lambda item: item[1])
+
+    ## Append module_without_priority to modules_with_priorities, as
+    ## the module without priority is considered to have the highest
+    ## priority
+    debug('modules_with_priorities: %s' % modules_with_priorities)
+    debug('module_without_priority: %s' % module_without_priority)
+    modules = [ m[0] for m in modules_with_priorities ]
+    modules.append(module_without_priority)
+
+    debug('modules in order: %s' % modules)
     return modules
 
 def load_modules():
@@ -373,6 +421,21 @@ def system_find(basedir, maxdepth=None, type=None, expr=None, path=None, name=No
     ## Remove the trailing newlines
     return [ l[:-1] for l in proc.stdout.readlines() ]
 
+def get_layer_priority(layer_dir):
+    conf_file = os.path.join(layer_dir, 'conf', 'layer.conf')
+    c = Conf(conf_file, quiet=True)
+    c.read_conf()
+    priority = None
+    for expr in c.conf_data:
+        ## Although it's quite sloppy, let's consider a layer conf
+        ## file will only set the priority for itself.  Just pick
+        ## anything that starts with BBFILE_PRIORITY
+        if expr[0].startswith('BBFILE_PRIORITY'):
+            priority = int(expr[2][0])
+    if priority is None:
+        raise Exception('Could not determine priority for layer %s' % name)
+    return priority
+
 def find_layers():
     ''' Return a dict mapping layer names to their paths '''
     layer_conf_paths = system_find(os.path.join(PLATFORM_ROOT_DIR, "sources"),
@@ -383,7 +446,14 @@ def find_layers():
         layer_dir = os.path.dirname(os.path.dirname(layer_conf_path))
         layer = os.path.basename(layer_dir)
         layers[layer] = layer_dir
-    return layers
+
+    # Determine priorities
+    layers_with_priorities = {}
+    for name, layer_dir in layers.items():
+        priority = get_layer_priority(layer_dir)
+        layers_with_priorities[name] = {'priority': priority,
+                                        'path': layer_dir }
+    return layers_with_priorities
 
 def weak_set_var(var):
     # Use the environment as value or take the default, making it weak
