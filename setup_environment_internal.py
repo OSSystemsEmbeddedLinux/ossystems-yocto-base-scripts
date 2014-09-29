@@ -370,7 +370,8 @@ def system_find(basedir, maxdepth=None, type=None, expr=None, path=None, name=No
         args += ['-name', name]
     command = ["find"] + args
     proc = subprocess.Popen(command, stdout = subprocess.PIPE)
-    return proc.stdout.readlines()
+    ## Remove the trailing newlines
+    return [ l[:-1] for l in proc.stdout.readlines() ]
 
 def find_layers():
     ''' Return a dict mapping layer names to their paths '''
