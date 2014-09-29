@@ -18,6 +18,11 @@ def usage(exit_code=None):
         sys.exit(exit_code)
 
 ###
+### Debug
+###
+DEBUG_SETUP_ENVIRONMENT = os.environ.has_key('DEBUG_SETUP_ENVIRONMENT')
+
+###
 ### Paths
 ###
 PLATFORM_ROOT_DIR = os.getcwd()
@@ -345,6 +350,10 @@ def write_confs():
 ###
 ### Misc
 ###
+def debug(msg):
+    if DEBUG_SETUP_ENVIRONMENT:
+        sys.stderr.write('DEBUG: ' + msg + '\n')
+
 def system_find(basedir, maxdepth=None, type=None, expr=None, path=None, name=None):
     if path and name:
         raise Exception('path and name cannot be used together.')
