@@ -58,8 +58,22 @@ def reset_var(var, val, op='='):
     remove_var(var)
     set_var(var, val, op)
 
-def append_layers(layers):
+def append_layer(layer_dir):
+    priority = get_layer_priority(layer_dir)
+    data = BBLAYERS_CONF._simplify()
+    layers = []
+    for expr in data:
+        if expr[0] == 'BBLAYERS':
+            layers = expr[2]
+            break
+    layers.append(layer_dir)
+    layers = sorted(layers, key=get_layer_priority, reverse=True)
+    BBLAYERS_CONF.remove('BBLAYERS')
     BBLAYERS_CONF.add('BBLAYERS', '+=', ' '.join(layers))
+
+def append_layers(layer_dirs):
+    for layer_dir in layer_dirs:
+        append_layer(layer_dir)
 
 def get_machines_by_layer(layer):
     layers = find_layers()
