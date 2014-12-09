@@ -113,6 +113,20 @@ def run_after_init(fn):
 def run_hook(hook):
     [ fn() for fn in HOOKS[hook] ]
 
+def read_project_priority(mod):
+    ''' Projects that are not proper Yocto Project layers can specify
+    their priority in a setup-environment.d/priority file.  This is
+    required because setup-environment requires hook scripts to have a
+    priority setting, to execute them in a deterministic order.'''
+    mod_dir = os.path.dirname(mod)
+    priority_file = os.path.join(mod_dir, 'priority')
+    priority = None
+    try:
+        priority = int(open(priority_file).readline().strip())
+    except:
+        debug('Could not determine priority for project %s' % os.path.dirname(mod_dir))
+    return priority
+
 def find_modules():
     ''' Return a list of modules.  Lower priority ones first. '''
     layers = find_layers()
@@ -140,7 +154,7 @@ def find_modules():
                 modules_with_priorities.append((mod, layer_priority))
                 break
         else:
-            modules_with_priorities.append((mod, None))
+            modules_with_priorities.append((mod, read_project_priority(mod)))
 
     ## Remove any module without priority from
     ## modules_with_priorities.  We allow only a single module without
