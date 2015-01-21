@@ -546,6 +546,7 @@ if __name__ == '__main__':
     if not os.path.exists(env_file):
         sys.stderr.write('env file (%s) does not exist.  Aborting.\n' % env_file)
 
+    # Identify the OEROOT to use
     if os.path.exists('sources/oe-core'):
         OEROOT = 'sources/oe-core'
     else:
