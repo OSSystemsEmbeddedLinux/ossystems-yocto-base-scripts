@@ -551,8 +551,11 @@ if __name__ == '__main__':
         OEROOT = 'sources/oe-core'
     elif os.path.exists('sources/openembedded-core'):
         OEROOT = 'sources/openembedded-core'
-    else:
+    elif os.path.exists('sources/poky'):
         OEROOT = 'sources/poky'
+    else:
+        sys.stderr.write("ERROR: Neither OE-Core or Poky could be found inside 'sources' directory.\n")
+        sys.exit(1)
 
     os.environ['OEROOT'] = OEROOT
     os.environ['PLATFORM_ROOT_DIR'] = PLATFORM_ROOT_DIR
