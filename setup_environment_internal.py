@@ -549,6 +549,8 @@ if __name__ == '__main__':
     # Identify the OEROOT to use
     if os.path.exists('sources/oe-core'):
         OEROOT = 'sources/oe-core'
+    elif os.path.exists('sources/openembedded-core'):
+        OEROOT = 'sources/openembedded-core'
     else:
         OEROOT = 'sources/poky'
 
