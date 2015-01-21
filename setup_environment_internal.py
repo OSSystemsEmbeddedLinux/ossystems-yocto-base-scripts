@@ -494,11 +494,13 @@ def weak_set_var(var):
 
     reset_var(var, val, op='?=')
 
-def run_oe_init_build_env(build_dir):
+def run_oe_init_build_env(build_dir, bitbake_dir):
     os.chdir(OEROOT)
+    build_dir_path = os.path.join(PLATFORM_ROOT_DIR, build_dir)
+    bitbake_dir_path = os.path.join(PLATFORM_ROOT_DIR, bitbake_dir)
     command = ['bash',
                '-c',
-               'source ./oe-init-build-env %s > /dev/null && env' % os.path.join(PLATFORM_ROOT_DIR, build_dir)]
+               'source ./oe-init-build-env %s %s > /dev/null && env' % (build_dir_path, bitbake_dir_path)]
     proc = subprocess.Popen(command, stdout = subprocess.PIPE)
     # Update the current environment
     for line in proc.stdout.readlines():
@@ -555,6 +557,13 @@ if __name__ == '__main__':
         OEROOT = 'sources/poky'
 
     os.environ['OEROOT'] = OEROOT
+
+    # Identify BitBake directory
+    if os.path.exists('sources/bitbake'):
+        bitbake_dir = 'sources/bitbake'
+    else:
+        bitbake_dir = os.path.join(OEROOT, 'bitbake')
+
     os.environ['PLATFORM_ROOT_DIR'] = PLATFORM_ROOT_DIR
 
     local_conf_file = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'local.conf')
@@ -576,7 +585,7 @@ if __name__ == '__main__':
     run_hook('set-defaults')
 
     run_hook('before-init')
-    run_oe_init_build_env(build_dir)
+    run_oe_init_build_env(build_dir, bitbake_dir)
 
     ## Now that run_oe_init_build_env has been run, we can actually
     ## read the configuration files
