@@ -181,7 +181,8 @@ def find_modules():
     debug('modules_with_priorities: %s' % modules_with_priorities)
     debug('module_without_priority: %s' % module_without_priority)
     modules = [ m[0] for m in modules_with_priorities ]
-    modules.append(module_without_priority)
+    if module_without_priority:
+        modules.append(module_without_priority)
 
     debug('modules in order: %s' % modules)
     return modules
