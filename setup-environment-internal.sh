@@ -41,6 +41,9 @@ while read line; do
     fi
 done < $env_file
 
+# Support for ye's `cd' command:
+[ -e sources/ye/ye-cd ] && . sources/ye/ye-cd
+
 rm $env_file
 
 cd $BUILDDIR
