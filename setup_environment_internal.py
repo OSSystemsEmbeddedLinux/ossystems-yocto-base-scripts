@@ -374,6 +374,12 @@ class Conf(object):
     def _parse_conf(self, lines):
         assignments = []
         for line in lines:
+            lstripped_line = line.lstrip()
+            # Ignore require and include directives, as they will only
+            # be processed by BitBake
+            if (lstripped_line.startswith('require') or
+                lstripped_line.startswith('include')):
+                continue
             expr = parse_assignment_expr(line)
             if expr:
                 assignments.append(expr)
