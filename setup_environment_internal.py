@@ -374,6 +374,10 @@ class Conf(object):
     def _parse_conf(self, lines):
         assignments = []
         for line in lines:
+            lstripped_line = line.lstrip()
+            if (lstripped_line.startswith('require') or
+                lstripped_line.startswith('include')):
+                continue
             expr = parse_assignment_expr(line)
             if expr:
                 assignments.append(expr)
