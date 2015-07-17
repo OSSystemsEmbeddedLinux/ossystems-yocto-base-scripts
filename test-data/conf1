@@ -11,3 +11,4 @@ MULTILINE = "foo \
              baz \
             "
 EMPTY = ""
+APPEND_append = " foo"
