@@ -33,7 +33,8 @@ assert conf1.conf_data == [('BB_NUMBER_THREADS', '=', ['8']),
                            ('PACKAGE_CLASSES', '?=', ['package_ipk']),
                            ('ACCEPT_OSS_EULA', '=', ['1']),
                            ('MULTILINE', '=', ['foo', 'bar', 'baz']),
-                           ('EMPTY' , '=', [])]
+                           ('EMPTY' , '=', []),
+                           ('APPEND_append', '=', [' ', 'foo'])]
 
 
 ## Since test-data/conf1 exists, conf1 is created as read-only
@@ -55,6 +56,9 @@ assert get_var('MULTI', conf2) == ['foo', 'bar', 'baz']
 conf2.add('EMPTY', '=', '')
 assert get_var('EMPTY', conf2) == []
 
+conf2.add('APPEND_append', '=', ' foo bar')
+assert get_var('APPEND_append', conf2) == [' ', 'foo', 'bar']
+
 conf2.write()
 
 assert os.path.exists('test-data/conf2')
@@ -62,10 +66,10 @@ assert os.path.exists('test-data/conf2')
 ## Check if we can read what we write
 conf2_check = Conf('test-data/conf2', quiet=True)
 conf2_check.read_conf()
-
 assert conf2_check.conf_data == [('FOO', '=', ['a', 'foo']),
                                  ('MULTI', '=', ['foo', 'bar', 'baz']),
-                                 ('EMPTY', '=', [])]
+                                 ('EMPTY', '=', []),
+                                 ('APPEND_append', '=', [' ', 'foo', 'bar'])]
 
 
 

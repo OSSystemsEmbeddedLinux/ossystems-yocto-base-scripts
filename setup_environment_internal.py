@@ -282,8 +282,14 @@ class Eula():
 ###
 ### Configuration files handling
 ###
-def parse_value(val):
-    return eval(val).split()
+def parse_value(val, preserve_leading_space):
+    val = eval(val)
+    if preserve_leading_space and len(val) > 1 and val[0].isspace():
+        # Keep leading whitespace for values _append'ed to
+        # variables, as they are significant.
+        return [' '] + val.split()
+    else:
+        return val.split()
 
 def parse_assignment_expr(line):
     var = ''
@@ -315,12 +321,17 @@ def parse_assignment_expr(line):
             val = line[pos:]
             break
     if var and op and val:
-        return (var, op, parse_value(val))
+        return (var, op, parse_value(val, '_append' in var))
     else:
         return None # Not an assignment line
 
 def format_value(val):
-    escaped = pipes.quote(' '.join(map(str, val)))
+    if len(val) > 1 and val[0].isspace():
+        ## ' '.join(...) will create two spaces in case the first val
+        ## item is a space, so we handle that special case.
+        escaped = pipes.quote(' ' + ' '.join(map(str, val[1:])))
+    else:
+        escaped = pipes.quote(' '.join(map(str, val)))
     ## pipe.quote doesn't seem to actually quote the given argument,
     ## unless it's necessary.  We want arguments to be always quoted.
     if not escaped.startswith("'"):
@@ -415,7 +426,14 @@ class Conf(object):
 
     def add(self, var, op, val):
         if not self.read_only:
-            self.conf_data.append((var, op, str(val).split()))
+            val = str(val)
+            if '_append' in var and len(val) > 1 and val[0].isspace():
+                # Keep leading whitespace for values _append'ed to
+                # variables, as they are significant.
+                new_val = [' '] + val.split()
+            else:
+                new_val = val.split()
+            self.conf_data.append((var, op, new_val))
 
     def remove(self, var):
         if not self.read_only:
