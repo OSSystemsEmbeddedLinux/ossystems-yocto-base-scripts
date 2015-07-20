@@ -32,9 +32,10 @@ assert conf1.conf_data == [('BB_NUMBER_THREADS', '=', ['8']),
                            ('DISTRO', '?=', ['oel']),
                            ('PACKAGE_CLASSES', '?=', ['package_ipk']),
                            ('ACCEPT_OSS_EULA', '=', ['1']),
-                           ('MULTILINE', '=', ['foo', 'bar', 'baz']),
+                           ('MULTILINE', '=', ['foo', 'bar', 'baz             ']),
                            ('EMPTY' , '=', []),
-                           ('APPEND_append', '=', [' ', 'foo'])]
+                           ('APPEND_append', '=', [' foo']),
+                           ('PREPEND_prepend', '=', [' bar  '])]
 
 
 ## Since test-data/conf1 exists, conf1 is created as read-only
@@ -57,7 +58,10 @@ conf2.add('EMPTY', '=', '')
 assert get_var('EMPTY', conf2) == []
 
 conf2.add('APPEND_append', '=', ' foo bar')
-assert get_var('APPEND_append', conf2) == [' ', 'foo', 'bar']
+assert get_var('APPEND_append', conf2) == [' foo', 'bar']
+
+conf2.add('PREPEND_prepend', '=', ' xxx yyy  ')
+assert get_var('PREPEND_prepend', conf2) == [' xxx', 'yyy  ']
 
 conf2.write()
 
@@ -69,8 +73,8 @@ conf2_check.read_conf()
 assert conf2_check.conf_data == [('FOO', '=', ['a', 'foo']),
                                  ('MULTI', '=', ['foo', 'bar', 'baz']),
                                  ('EMPTY', '=', []),
-                                 ('APPEND_append', '=', [' ', 'foo', 'bar'])]
-
+                                 ('APPEND_append', '=', [' foo', 'bar']),
+                                 ('PREPEND_prepend', '=', [' xxx', 'yyy  '])]
 
 
 print 'All fine!'

@@ -67,6 +67,7 @@ def append_layer(layer_dir):
             layers = expr[2]
             break
     layers.append(layer_dir)
+    layers = [l.strip() for l in layers]
     layers = sorted(layers, key=get_layer_priority, reverse=True)
     BBLAYERS_CONF.remove('BBLAYERS')
     BBLAYERS_CONF.add('BBLAYERS', '+=', ' '.join(layers))
@@ -282,14 +283,8 @@ class Eula():
 ###
 ### Configuration files handling
 ###
-def parse_value(val, preserve_leading_space):
-    val = eval(val)
-    if preserve_leading_space and len(val) > 1 and val[0].isspace():
-        # Keep leading whitespace for values _append'ed to
-        # variables, as they are significant.
-        return [' '] + val.split()
-    else:
-        return val.split()
+def parse_value(val):
+    return split_keep_spaces(str(eval(val)))
 
 def parse_assignment_expr(line):
     var = ''
@@ -321,17 +316,12 @@ def parse_assignment_expr(line):
             val = line[pos:]
             break
     if var and op and val:
-        return (var, op, parse_value(val, '_append' in var))
+        return (var, op, parse_value(val))
     else:
         return None # Not an assignment line
 
 def format_value(val):
-    if len(val) > 1 and val[0].isspace():
-        ## ' '.join(...) will create two spaces in case the first val
-        ## item is a space, so we handle that special case.
-        escaped = pipes.quote(' ' + ' '.join(map(str, val[1:])))
-    else:
-        escaped = pipes.quote(' '.join(map(str, val)))
+    escaped = pipes.quote(' '.join(map(str, val)))
     ## pipe.quote doesn't seem to actually quote the given argument,
     ## unless it's necessary.  We want arguments to be always quoted.
     if not escaped.startswith("'"):
@@ -426,14 +416,7 @@ class Conf(object):
 
     def add(self, var, op, val):
         if not self.read_only:
-            val = str(val)
-            if '_append' in var and len(val) > 1 and val[0].isspace():
-                # Keep leading whitespace for values _append'ed to
-                # variables, as they are significant.
-                new_val = [' '] + val.split()
-            else:
-                new_val = val.split()
-            self.conf_data.append((var, op, new_val))
+            self.conf_data.append((var, op, split_keep_spaces(str(val))))
 
     def remove(self, var):
         if not self.read_only:
@@ -453,6 +436,41 @@ def write_confs():
 def debug(msg):
     if DEBUG_SETUP_ENVIRONMENT:
         sys.stderr.write('DEBUG: ' + msg + '\n')
+
+def count_leading_spaces(s):
+    spaces = 0
+    for char in s:
+        if char.isspace():
+            spaces += 1
+        else:
+            break
+    return spaces
+
+def count_trailing_spaces(s):
+    spaces = 0
+    slen = len(s)
+    i = slen - 1
+    while slen:
+        if s[i].isspace():
+            spaces += 1
+            i -= 1
+        else:
+            break
+    return spaces
+
+def split_keep_spaces(s):
+    lspaces = ' ' * count_leading_spaces(s)
+    tspaces = ' ' * count_trailing_spaces(s)
+    tokens = s.split()
+    if tokens:
+        if len(tokens) > 1:
+            return ([lspaces + tokens[0]] +
+                    tokens[1:-1] +
+                    [tokens[-1] + tspaces])
+        else:
+            return [lspaces + tokens[0] + tspaces]
+    else:
+        return tokens
 
 def system_find(basedir, maxdepth=None, type=None, expr=None, path=None, name=None):
     if path and name:
