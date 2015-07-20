@@ -44,6 +44,14 @@ done < $env_file
 # Support for ye's `cd' command:
 [ -e sources/ye/ye-cd ] && . sources/ye/ye-cd
 
+# Enable ye autocompletion
+if [ -e sources/ye/ye-completion.sh ]; then
+    # Load bash completion module for ZSH
+    [[ -n $ZSH_VERSION ]] && autoload bashcompinit && bashcompinit
+
+    source sources/ye/ye-completion.sh
+fi
+
 rm $env_file
 
 cd $BUILDDIR
