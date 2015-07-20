@@ -12,3 +12,4 @@ MULTILINE = "foo \
             "
 EMPTY = ""
 APPEND_append = " foo"
+PREPEND_prepend = " bar  "
