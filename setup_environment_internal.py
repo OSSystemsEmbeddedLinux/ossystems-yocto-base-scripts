@@ -209,7 +209,7 @@ class Eula():
     def _require_eula_acceptance(self, eula_file, acceptance_expr):
         ## The current directory is the poky layer root directory, so
         ## we prepend ../ to the eula file path
-        eula_file_path = os.path.join('..', eula_file)
+        eula_file_path = os.path.join(PLATFORM_ROOT_DIR, 'sources', eula_file)
 
         if os.path.exists(eula_file_path):
             os.system('more -d "%s"' % eula_file_path)
@@ -536,12 +536,12 @@ def weak_set_var(var):
     reset_var(var, val, op='?=')
 
 def run_oe_init_build_env(build_dir, bitbake_dir):
-    os.chdir(OEROOT)
     build_dir_path = os.path.join(PLATFORM_ROOT_DIR, build_dir)
     bitbake_dir_path = os.path.join(PLATFORM_ROOT_DIR, bitbake_dir)
+
     command = ['bash',
                '-c',
-               'source ./oe-init-build-env %s %s > /dev/null && env' % (build_dir_path, bitbake_dir_path)]
+               'source %s/oe-init-build-env %s %s > /dev/null && env' % (OEROOT, build_dir_path, bitbake_dir_path)]
     proc = subprocess.Popen(command, stdout = subprocess.PIPE)
     # Update the current environment
     for line in proc.stdout.readlines():
@@ -589,13 +589,15 @@ if __name__ == '__main__':
     if not os.path.exists(env_file):
         sys.stderr.write('env file (%s) does not exist.  Aborting.\n' % env_file)
 
+    os.environ['PLATFORM_ROOT_DIR'] = PLATFORM_ROOT_DIR
+
     # Identify the OEROOT to use
-    if os.path.exists('sources/oe-core'):
-        OEROOT = 'sources/oe-core'
-    elif os.path.exists('sources/openembedded-core'):
-        OEROOT = 'sources/openembedded-core'
-    elif os.path.exists('sources/poky'):
-        OEROOT = 'sources/poky'
+    if os.path.exists(os.path.join(PLATFORM_ROOT_DIR, 'sources/oe-core')):
+        OEROOT = os.path.join(PLATFORM_ROOT_DIR, 'sources/oe-core')
+    elif os.path.exists(os.path.join(PLATFORM_ROOT_DIR, 'sources/openembedded-core')):
+        OEROOT = os.path.join(PLATFORM_ROOT_DIR, 'sources/openembedded-core')
+    elif os.path.exists(os.path.join(PLATFORM_ROOT_DIR, 'sources/poky')):
+        OEROOT = os.path.join(PLATFORM_ROOT_DIR, 'sources/poky')
     else:
         sys.stderr.write("ERROR: Neither OE-Core or Poky could be found inside 'sources' directory.\n")
         sys.exit(1)
@@ -603,12 +605,10 @@ if __name__ == '__main__':
     os.environ['OEROOT'] = OEROOT
 
     # Identify BitBake directory
-    if os.path.exists('sources/bitbake'):
-        bitbake_dir = 'sources/bitbake'
+    if os.path.exists(os.path.join(PLATFORM_ROOT_DIR, 'sources/bitbake')):
+        bitbake_dir = os.path.join(PLATFORM_ROOT_DIR, 'sources/bitbake')
     else:
         bitbake_dir = os.path.join(OEROOT, 'bitbake')
-
-    os.environ['PLATFORM_ROOT_DIR'] = PLATFORM_ROOT_DIR
 
     local_conf_file = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'local.conf')
     bblayers_conf_file = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'bblayers.conf')
