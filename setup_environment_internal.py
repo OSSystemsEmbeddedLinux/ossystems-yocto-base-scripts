@@ -503,7 +503,8 @@ def get_layer_priority(layer_dir):
         if expr[0].startswith('BBFILE_PRIORITY'):
             priority = int(expr[2][0])
     if priority is None:
-        raise Exception('Could not determine priority for layer (%s)' % conf_file)
+        debug('Could not determine priority for layer (%s). Setting it as "1."' % conf_file)
+        priority = 1
     return priority
 
 def find_layers():
