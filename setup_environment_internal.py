@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import os
 import re
@@ -190,7 +190,8 @@ def find_modules():
 
 def load_modules():
     for module in find_modules():
-        execfile(module)
+        with open(module) as module_source:
+            exec(module_source.read())
 
 
 ###
@@ -215,7 +216,7 @@ class Eula():
             os.system('more -d "%s"' % eula_file_path)
             answer = None
             while not answer in ['y', 'Y', 'n', 'N']:
-                sys.stdout.write('Accept EULA (%s)? [y/n] ' % eula_file)
+                print('Accept EULA (%s)? [y/n] ' % eula_file, end = '', flush = True)
                 answer = sys.stdin.readline().strip()
             if answer in ['y', 'Y']:
                 self._set_eula_accepted(acceptance_expr)
@@ -275,7 +276,7 @@ class Eula():
                         '=== EULA(s). To have the right to use those binaries in your images    ===\n' +
                         '=== you need to read and accept the EULA(s) that will be displayed.    ===\n' +
                         '==========================================================================\n\n')
-                    sys.stdout.write('Press ENTER to continue')
+                    print('Press ENTER to continue ', end = '', flush = True)
                     sys.stdin.readline()
                 self._require_eula_acceptance(eula_file, eula_acceptance_expr)
 
@@ -489,7 +490,7 @@ def system_find(basedir, maxdepth=None, type=None, expr=None, path=None, name=No
     command = ["find"] + args
     proc = subprocess.Popen(command, stdout = subprocess.PIPE)
     ## Remove the trailing newlines
-    return [ l[:-1] for l in proc.stdout.readlines() ]
+    return [ l[:-1].decode() for l in proc.stdout.readlines() ]
 
 def get_layer_priority(layer_dir):
     conf_file = os.path.join(layer_dir, 'conf', 'layer.conf')
@@ -546,7 +547,7 @@ def run_oe_init_build_env(build_dir, bitbake_dir):
     proc = subprocess.Popen(command, stdout = subprocess.PIPE)
     # Update the current environment
     for line in proc.stdout.readlines():
-        (var, _, val) = line.strip().partition("=")
+        (var, _, val) = line.strip().decode().partition("=")
         os.environ[var] = val
 
     # Enable site.conf use
