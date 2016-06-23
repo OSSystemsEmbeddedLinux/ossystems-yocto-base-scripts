@@ -20,7 +20,7 @@ def usage(exit_code=None):
 ###
 ### Debug
 ###
-DEBUG_SETUP_ENVIRONMENT = os.environ.has_key('DEBUG_SETUP_ENVIRONMENT')
+DEBUG_SETUP_ENVIRONMENT = 'DEBUG_SETUP_ENVIRONMENT' in os.environ
 
 ###
 ### Paths
@@ -555,11 +555,11 @@ def run_oe_init_build_env(build_dir, bitbake_dir):
         dest_site_conf = os.path.join(PLATFORM_ROOT_DIR, build_dir, 'conf', 'site.conf')
         if os.path.exists(source_site_conf):
             if os.path.exists(dest_site_conf) and not os.path.islink(dest_site_conf):
-                print "WARNING: The conf/site.conf file is not a symlink, not touching it"
+                print("WARNING: The conf/site.conf file is not a symlink, not touching it")
             elif os.path.islink(dest_site_conf):
                 os.unlink(dest_site_conf)
 
-            print "INFO: Linking %s to conf/site.conf" % source_site_conf
+            print("INFO: Linking %s to conf/site.conf" % source_site_conf)
             os.symlink(source_site_conf, dest_site_conf)
             break
 
@@ -574,7 +574,7 @@ def report_environment(env_file):
 ###
 if __name__ == '__main__':
     if os.getuid() == 0:
-        print "ERROR: do not use the BSP as root. Exiting..."
+        print("ERROR: do not use the BSP as root. Exiting...")
         sys.exit(1)
 
     if len(sys.argv) < 3:
