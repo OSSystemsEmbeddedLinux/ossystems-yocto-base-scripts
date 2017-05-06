@@ -68,7 +68,7 @@ def append_layer(layer_dir):
             break
     layers.append(layer_dir)
     layers = [l.strip() for l in layers]
-    layers = sorted(layers, key=get_layer_priority, reverse=True)
+    layers = sorted(set(layers), key=get_layer_priority, reverse=True)
     BBLAYERS_CONF.remove('BBLAYERS')
     BBLAYERS_CONF.add('BBLAYERS', '+=', ' '.join(layers))
 
