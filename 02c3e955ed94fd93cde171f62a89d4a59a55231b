@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7aaa499b_5e79d52e",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 1000143
+      },
+      "writtenOn": "2017-09-29T14:16:03Z",
+      "side": 1,
+      "message": "What is the exception?",
+      "range": {
+        "startLine": 12,
+        "startChar": 1,
+        "endLine": 12,
+        "endChar": 11
+      },
+      "revId": "02c3e955ed94fd93cde171f62a89d4a59a55231b",
+      "serverId": "57f9965e-cfb2-4db6-8589-8b17f788c97f",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7aaa499b_fe8e6126",
+        "filename": "setup_environment_internal.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 1000143
+      },
+      "writtenOn": "2017-09-29T14:16:03Z",
+      "side": 1,
+      "message": "I would not change this. Since this isn\u0027t the function that is raising a exception. Also, also lstrip(\u0027 \u0027) will only consider \u0027 \u0027 while isspace is more robust. \n\nFrom isspace official docs:\n\nWhitespace characters are those characters defined in the Unicode character database as “Other” or “Separator” and those with bidirectional property being one of “WS”, “B”, or “S”.",
+      "range": {
+        "startLine": 442,
+        "startChar": 4,
+        "endLine": 442,
+        "endChar": 38
+      },
+      "revId": "02c3e955ed94fd93cde171f62a89d4a59a55231b",
+      "serverId": "57f9965e-cfb2-4db6-8589-8b17f788c97f",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7aaa499b_be98d96b",
+        "filename": "setup_environment_internal.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 445,
+      "author": {
+        "id": 1000143
+      },
+      "writtenOn": "2017-09-29T14:16:03Z",
+      "side": 1,
+      "message": "This has the same problem posted above. Why not:\n\ndef count_trailing_spaces(s):\n    return count_leading_spaces(s[::-1])\n\n[::-1] is a some kind idiomatic way to reverse a string but I do agree that it is not the most clearer solution.\n\nYou may use reversed builtin, which would solve this issue, but it returns an iterator instead of a string. I\u0027m pretty sure that it will work here, but any change to your algorithm may break it.\n\nSo, for me, the best solution is:\n\n- keep count_leading_space\n- use count_leading_space(s[::-1]) for count_trailing_spaces",
+      "range": {
+        "startLine": 445,
+        "startChar": 4,
+        "endLine": 445,
+        "endChar": 38
+      },
+      "revId": "02c3e955ed94fd93cde171f62a89d4a59a55231b",
+      "serverId": "57f9965e-cfb2-4db6-8589-8b17f788c97f",
+      "unresolved": false
+    }
+  ]
+}
