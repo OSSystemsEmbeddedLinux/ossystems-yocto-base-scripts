@@ -448,16 +448,7 @@ def count_leading_spaces(s):
     return spaces
 
 def count_trailing_spaces(s):
-    spaces = 0
-    slen = len(s)
-    i = slen - 1
-    while slen:
-        if s[i].isspace():
-            spaces += 1
-            i -= 1
-        else:
-            break
-    return spaces
+    return count_leading_spaces(s[::-1])
 
 def split_keep_spaces(s):
     lspaces = ' ' * count_leading_spaces(s)
