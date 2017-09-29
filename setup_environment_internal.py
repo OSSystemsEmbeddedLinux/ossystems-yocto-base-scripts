@@ -439,25 +439,10 @@ def debug(msg):
         sys.stderr.write('DEBUG: ' + msg + '\n')
 
 def count_leading_spaces(s):
-    spaces = 0
-    for char in s:
-        if char.isspace():
-            spaces += 1
-        else:
-            break
-    return spaces
+    return len(s) - len(s.lstrip(' '))
 
 def count_trailing_spaces(s):
-    spaces = 0
-    slen = len(s)
-    i = slen - 1
-    while slen:
-        if s[i].isspace():
-            spaces += 1
-            i -= 1
-        else:
-            break
-    return spaces
+    return len(s) - len(s.rstrip(' '))
 
 def split_keep_spaces(s):
     lspaces = ' ' * count_leading_spaces(s)
