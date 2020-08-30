@@ -309,9 +309,10 @@ def parse_assignment_expr(line):
                 if len(char) > 3:
                     raise Exception('Syntax error (operator): %s' % line)
             elif char == ' ':
-                if not op in ['=', '+=', '=+', '?=', '??=', ':=', '.=', '=.']:
-                    raise Exception('Invalid operator: %s' % op)
-                looking_for = 'val'
+                if op != '':
+                    if not op in ['=', '+=', '=+', '?=', '??=', ':=', '.=', '=.']:
+                        raise Exception('Invalid operator: %s' % op)
+                    looking_for = 'val'
             else:
                 raise Exception('Syntax error (operator): %s' % line)
         else:
