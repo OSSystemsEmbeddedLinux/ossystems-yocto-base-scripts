@@ -100,7 +100,7 @@ HOOKS = { 'set-defaults': [],
 
 DEFAULTS = { 'DISTRO': 'poky',
              'MACHINE': 'qemuarm',
-             'SDKMACHINE': 'i686',
+             'SDKMACHINE': 'x86_64',
              'PACKAGE_CLASSES': 'package_ipk' }
 
 def run_set_defaults(fn):
