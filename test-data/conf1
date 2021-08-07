@@ -14,4 +14,7 @@ EMPTY = ""
 APPEND_append = " foo"
 PREPEND_prepend = " bar  "
 
+APPEND:append = " foo"
+PREPEND:prepend = " bar  "
+
 BBFILES += "${@bb.utils.contains("VAR", "", "", "", d)}"

@@ -301,7 +301,7 @@ def parse_assignment_expr(line):
     line = line.strip()
     for pos, char in enumerate(line):
         if looking_for == 'var':
-            if char not in ['=', '?', ':', '+']:
+            if char not in ['=', '?', '+']:
                 if char == ' ':
                     looking_for = 'op'
                 else:

@@ -36,6 +36,8 @@ assert conf1.conf_data == [('BB_NUMBER_THREADS', '=', ['8']),
                            ('EMPTY' , '=', []),
                            ('APPEND_append', '=', [' foo']),
                            ('PREPEND_prepend', '=', [' bar  ']),
+                           ('APPEND:append', '=', [' foo']),
+                           ('PREPEND:prepend', '=', [' bar  ']),
                            ('BBFILES', '+=', ['${@bb.utils.contains("VAR",', '"",', '"",', '"",', 'd)}'])]
 
 
