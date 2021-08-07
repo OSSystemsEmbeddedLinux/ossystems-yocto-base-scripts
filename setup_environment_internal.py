@@ -286,6 +286,11 @@ class Eula():
 ### Configuration files handling
 ###
 def parse_value(val):
+    # Eventually, the value might have quotes and we those need to be escaped or
+    # the `eval(...)` below might use invalid syntax.
+    if val.startswith('"') and val.endswith('"'):
+        val = '"' + val[1:-1].replace('"', '\\"') + '"'
+
     return split_keep_spaces(str(eval(val)))
 
 def parse_assignment_expr(line):

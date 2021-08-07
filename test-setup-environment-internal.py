@@ -35,7 +35,8 @@ assert conf1.conf_data == [('BB_NUMBER_THREADS', '=', ['8']),
                            ('MULTILINE', '=', ['foo', 'bar', 'baz             ']),
                            ('EMPTY' , '=', []),
                            ('APPEND_append', '=', [' foo']),
-                           ('PREPEND_prepend', '=', [' bar  '])]
+                           ('PREPEND_prepend', '=', [' bar  ']),
+                           ('BBFILES', '+=', ['${@bb.utils.contains("VAR",', '"",', '"",', '"",', 'd)}'])]
 
 
 ## Since test-data/conf1 exists, conf1 is created as read-only
@@ -76,5 +77,4 @@ assert conf2_check.conf_data == [('FOO', '=', ['a', 'foo']),
                                  ('APPEND_append', '=', [' foo', 'bar']),
                                  ('PREPEND_prepend', '=', [' xxx', 'yyy  '])]
 
-
-print 'All fine!'
+print('All fine!')
