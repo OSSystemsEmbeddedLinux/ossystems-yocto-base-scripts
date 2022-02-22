@@ -1,5 +1,5 @@
 setupenv='sources/base/setup_environment_internal.py'
-whitelistenv='sources/base/variable-whitelist.inc'
+passthrough_env='sources/base/variable-passthrough.inc'
 
 if [ -z "$1" ]; then
     # Force usage (exit error)
@@ -17,17 +17,17 @@ BUILDDIR="`pwd`/$1"
 
 # These variable are whitelisted in 'oe-buildenv-internal' so keep it
 # in sync as it is know to affect the build setup
-whitelisted_vars=
+passthrough_env_additions=
 while read var; do
-    if [ -z "$whitelisted_vars" ]; then
-        whitelisted_vars=$var
+    if [ -z "$passthrough_env_additions" ]; then
+        passthrough_env_additions=$var
     else
-        whitelisted_vars="`echo -n $whitelisted_vars` $var"
+        passthrough_env_additions="`echo -n $passthrough_env_additions` $var"
     fi
     eval "[ -n \"\$$var\" ] && export $var || true"
-done < $whitelistenv
+done < $passthrough_env
 
-export BB_ENV_EXTRAWHITE="$whitelisted_vars"
+export BB_ENV_PASSTHROUGH_ADDITIONS="$passthrough_env_additions"
 
 # File to which $setupenv will write the environment
 env_file=`mktemp`
@@ -36,7 +36,7 @@ $setupenv $BUILDDIR $env_file || return $?
 
 while read line; do
     variable=`echo $line | awk -F'=' '{ print $1; }'`
-    if grep -w -q $variable $whitelistenv; then
+    if grep -w -q $variable $passthrough_env; then
         export "$line"
     fi
 done < $env_file
