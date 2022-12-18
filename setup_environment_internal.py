@@ -385,6 +385,7 @@ class Conf(object):
         for line in lines:
             lstripped_line = line.lstrip()
             if (lstripped_line.startswith('require') or
+                lstripped_line.startswith('addpylib') or
                 lstripped_line.startswith('include')):
                 continue
             expr = parse_assignment_expr(line)
