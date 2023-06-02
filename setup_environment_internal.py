@@ -501,7 +501,12 @@ def get_layer_priority(layer_dir):
         ## file will only set the priority for itself.  Just pick
         ## anything that starts with BBFILE_PRIORITY
         if expr[0].startswith('BBFILE_PRIORITY'):
-            priority = int(expr[2][0])
+            try:
+                priority = int(expr[2][0])
+            except:
+                ## Some layers try to use "dynamic" priority based on other layers (e.g: meta-qt6)
+                ## and we can assume it as undefined.
+                pass
     if priority is None:
         debug('Could not determine priority for layer (%s). Setting it as "1."' % conf_file)
         priority = 1
