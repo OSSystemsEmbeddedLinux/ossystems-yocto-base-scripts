@@ -551,7 +551,12 @@ def run_oe_init_build_env(build_dir, bitbake_dir):
     proc = subprocess.Popen(command, stdout = subprocess.PIPE)
     # Update the current environment
     for line in proc.stdout.readlines():
-        (var, _, val) = line.strip().decode().partition("=")
+        # Skip empty lines
+        line = line.strip().decode()
+        if line == '':
+            continue
+
+        (var, _, val) = line.partition("=")
         os.environ[var] = val
 
     # Enable site.conf use
