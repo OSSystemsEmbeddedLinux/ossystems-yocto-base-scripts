@@ -574,8 +574,12 @@ def run_oe_init_build_env(build_dir, bitbake_dir):
             break
 
 def report_environment(env_file):
+    meaningful_variables = os.environ.get('BB_ENV_PASSTHROUGH_ADDITIONS', '').split()
     env_fd = open(env_file, 'w')
     for var,val in os.environ.items():
+        if var not in meaningful_variables:
+            continue
+
         env_fd.write('%s=%s\n' % (var, val))
     env_fd.close()
 
