@@ -27,7 +27,7 @@ while read var; do
     eval "[ -n \"\$$var\" ] && export $var || true"
 done < $passthrough_env
 
-export BB_ENV_PASSTHROUGH_ADDITIONS="$passthrough_env_additions"
+export BB_ENV_PASSTHROUGH_ADDITIONS="$BB_ENV_PASSTHROUGH_ADDITIONS $passthrough_env_additions"
 
 # File to which $setupenv will write the environment
 env_file=`mktemp`
