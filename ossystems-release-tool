@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+
+opts_long_argument_list=(
+	"help"
+	"major"
+	"minor"
+	"patch"
+	"assume-yes"
+)
+
+opts_argument_list=(
+	"M"
+	"m"
+	"p"
+	"y"
+)
+
+die() {
+	while [[ $# -gt 0 ]]; do
+		echo -e "ERROR: $1"
+		shift 1
+	done
+	exit 1
+}
+
+usage() {
+	echo "Create a release."
+	echo
+	echo "Syntax: $(basename "$0") [-M|m|p|y|h|--major|minor|patch|assume-yes|help] [<version>]"
+	echo "options:"
+	echo "-M, --major       create a major release"
+	echo "-m, --minor       create a minor release"
+	echo "-p, --patch       create a patch release"
+	echo "-y, --assume-yes  assume Yes for tag confirmation"
+	echo "-h, --help        print this help menu."
+}
+
+## Increments the part of the string
+# $1: version itself
+# $2: number of part: 0 – major, 1 – minor, 2 – patch
+increment_version() {
+	local delimiter=.
+	local array=($(echo "$1" | tr $delimiter '\n'))
+	array[$2]=$(printf %0${#array[$2]}d $((array[$2] + 1)))
+	if [ $2 -lt 2 ]; then array[2]=$(printf %0${#array[2]}d 0); fi
+	if [ $2 -lt 1 ]; then array[1]=$(printf %0${#array[1]}d 0); fi
+	echo $(
+		local IFS=$delimiter
+		echo "${array[*]}"
+	)
+}
+
+# read arguments
+opts=$(getopt --longoptions "$(printf "%s," "${opts_long_argument_list[@]}")" \
+	--name "$(basename "$0")" \
+	--options "$(printf "%s," "${opts_argument_list[@]}")" \
+	-- "$@")
+
+eval set -- $opts
+
+if [[ $# == 1 ]]; then
+	usage
+	exit 0
+fi
+
+platform_dir=$(dirname $(readlink -f "$0"))/../..
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+	"--")
+		shift 1
+		;;
+
+	"-M" | "--major")
+		[ -z "$version_inc" ] || die "Conflicting version bump."
+		version_inc="0"
+		shift 1
+		;;
+
+	"-m" | "--minor")
+		[ -z "$version_inc" ] || die "Conflicting version bump."
+		version_inc="1"
+		shift 1
+		;;
+
+	"-p" | "--patch")
+		[ -z "$version_inc" ] || die "Conflicting version bump."
+		version_inc="2"
+		shift 1
+		;;
+
+	"-y" | "--assume-yes")
+		assume_yes="true"
+		shift 1
+		;;
+
+	"-h" | "--help")
+		usage
+		exit 0
+		;;
+
+	*)
+		[ -z "$version_inc" ] || die "Conflicting version requirements."
+		version="$1"
+		shift 1
+		;;
+	esac
+done
+
+source_diff=$(repo status | grep project | awk '{print $2}')
+if [ -n "$source_diff" ]; then
+	die "Release aborted! Uncommitted files in the following layers:\n$source_diff"
+fi
+
+echo "Checking layers... "
+cd $platform_dir/sources
+for dir in $(ls -1); do
+	is_pushed_remote=$(git --git-dir=$dir/.git branch -r --contains $(git --git-dir=$dir/.git log --pretty=format:"%H" -1))
+	if [ -z "$is_pushed_remote" ]; then
+		die "This branch contains unmerged commits: $dir"
+	fi
+done
+
+cd $platform_dir/.repo/manifests
+current_version=$(git describe 2>/dev/null | sed 's,-.*,,g')
+if [ -z "$current_version" ] && [ -z "$version" ]; then
+	die "No previous version exist, pass a version as argument."
+elif [ -n "$version" ]; then
+	tag="$version"
+elif [ -n "$version_inc" ]; then
+	tag=$(increment_version "$current_version" "$version_inc")
+fi
+
+existing_tag=$(git tag -l "$tag")
+if [ -n "$existing_tag" ]; then
+	die "$tag already exists. Aborting..."
+fi
+
+echo -n "Will create '$tag' tag. Proceed? (y/N): "
+if [ -z "$assume_yes" ]; then
+	read option
+else
+	echo "y"
+	option="y"
+fi
+
+case $option in
+"y" | "Y")
+	repo manifest -r --output=default.xml.tmp
+	mv default.xml.tmp default.xml
+
+	git add default.xml
+	git commit -m "default.xml: update for release $tag" --no-edit
+	if ! git tag -a -m "Release $tag" $tag HEAD; then
+		git reset --hard HEAD~1
+		die "Failed to create $tag. Aborting..."
+	fi
+
+	git revert HEAD --no-edit
+	git commit --amend -m "default.xml: resetting revisions for development after $tag"
+	git push origin $tag
+	git push -v origin HEAD:$(git config --get branch.default.merge)
+	;;
+"n" | "N" | "")
+	echo "Aborting..."
+	;;
+*)
+	die ""
+	;;
+esac
