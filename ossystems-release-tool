@@ -158,8 +158,8 @@ case $option in
 
 	git revert HEAD --no-edit
 	git commit --amend -m "default.xml: resetting revisions for development after $tag"
-	git push origin $tag
 	git push -v origin HEAD:$(git config --get branch.default.merge)
+	git push origin $tag
 	;;
 "n" | "N" | "")
 	echo "Aborting..."
