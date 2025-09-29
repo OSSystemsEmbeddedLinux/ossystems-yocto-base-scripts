@@ -4,7 +4,13 @@ import os
 import re
 import sys
 import glob
-import pipes
+# Starting with Python 3.3, shlex.quote() was introduced as
+# a replacement for the deprecated pipes.quote() function,
+# which was removed in Python 3.13.
+try:
+    from shlex import quote as shlex_quote
+except ImportError:
+    from pipes import quote as shlex_quote
 import tempfile
 import subprocess
 
@@ -329,9 +335,10 @@ def parse_assignment_expr(line):
         return None # Not an assignment line
 
 def format_value(val):
-    escaped = pipes.quote(' '.join(map(str, val)))
-    ## pipe.quote doesn't seem to actually quote the given argument,
-    ## unless it's necessary.  We want arguments to be always quoted.
+    escaped = shlex_quote(' '.join(map(str, val)))
+    ## shlex.quote / pipes.quote doesn't seem to actually quote the
+    ## given argument, unless it's necessary.  We want arguments to
+    ## be always quoted.
     if not escaped.startswith("'"):
         escaped = "'%s'" % escaped
     if len(escaped) > 65:
