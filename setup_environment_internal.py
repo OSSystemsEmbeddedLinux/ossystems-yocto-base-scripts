@@ -660,6 +660,11 @@ if __name__ == '__main__':
     weak_set_var('DISTRO')
     weak_set_var('PACKAGE_CLASSES')
 
+    # Co-locate the hash equivalence database with SSTATE_DIR so multiple
+    # builds sharing the same sstate cache also share the hashserv DB
+    # (per OE-Core's sanity.bbclass; matches the bitbake-setup default).
+    set_var('BB_HASHSERVE_DB_DIR', '${SSTATE_DIR}', op='?=')
+
     run_hook('after-init')
     write_confs()
 
