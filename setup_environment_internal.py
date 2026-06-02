@@ -305,6 +305,8 @@ def parse_assignment_expr(line):
     val = ''
     looking_for = 'var'
     line = line.strip()
+    if line.startswith('export '):
+        line = line[len('export '):].lstrip()
     for pos, char in enumerate(line):
         if looking_for == 'var':
             if char not in ['=', '?', '+']:
@@ -317,7 +319,7 @@ def parse_assignment_expr(line):
         elif looking_for == 'op':
             if char in ['=', '?', ':', '+', '.']:
                 op += char
-                if len(char) > 3:
+                if len(op) > 3:
                     raise Exception('Syntax error (operator): %s' % line)
             elif char == ' ':
                 if op != '':
