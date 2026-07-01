@@ -28,6 +28,8 @@ SSH_AUTH_SOCK
 STAMPS_DIR
 TCLIBC
 TCMODE
+TMUX
+TMUX_PANE
 all_proxy
 ftp_proxy
 ftps_proxy
