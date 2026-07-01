@@ -19,6 +19,8 @@ SSH_AGENT_PID
 SSH_AUTH_SOCK
 TCLIBC
 TCMODE
+TMUX
+TMUX_PANE
 all_proxy
 ftp_proxy
 http_proxy
