@@ -113,8 +113,13 @@ if [ -n "$source_diff" ]; then
 fi
 
 echo "Checking layers... "
-cd $platform_dir/sources
-for dir in $(ls -1); do
+# Enumerate the projects through repo rather than listing sources/, as the
+# manifest may nest projects deeper than one level (e.g. sources/conf/tools
+# and sources/conf/repo), in which case the parent directory is not a git
+# repository and would be mistaken for a layer.  'repo list -a' is used
+# because plain 'repo list' does not report every project of the manifest.
+cd $platform_dir
+for dir in $(repo list -a -p); do
 	is_pushed_remote=$(git --git-dir=$dir/.git branch -r --contains $(git --git-dir=$dir/.git log --pretty=format:"%H" -1))
 	if [ -z "$is_pushed_remote" ]; then
 		die "This branch contains unmerged commits: $dir"
