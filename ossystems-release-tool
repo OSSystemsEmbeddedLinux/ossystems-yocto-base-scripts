@@ -107,6 +107,10 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
+command -v repo > /dev/null || \
+	die "The 'repo' tool is not available in PATH." \
+	    "Please install it before running this tool."
+
 source_diff=$(repo status | grep project | awk '{print $2}')
 if [ -n "$source_diff" ]; then
 	die "Release aborted! Uncommitted files in the following layers:\n$source_diff"
