@@ -10,3 +10,8 @@ call:
     $ . ./setup-environment <build directory>
 
 After this step, you will be with everything need for build an image.
+
+To share settings such as DL_DIR or SSTATE_DIR across build
+directories, put them in ~/.oe/site.conf (or ~/.yocto/site.conf);
+setup-environment links it into each build's conf/. conf/site.conf
+in this repository is an example to start from.
